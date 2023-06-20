@@ -1,6 +1,6 @@
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
-const VELOCITY = 5;
+const VELOCITY = 3;
 
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
@@ -27,7 +27,7 @@ class Player {
 		this.velocity = velocity
 		this.image = new Image();
     	this.image.src = 'mouse3.png';
-    	this.radius = 15; // Adjust the radius of the player image
+    	this.radius = 18; // Adjust the radius of the player image
 	}
 
 
@@ -52,9 +52,13 @@ class Player {
 
 	update() {
 		this.draw()
-		this.position.x += this.velocity.x 
-		this.position.y += this.velocity.y
-
+		//no going horizontal
+		if(this.velocity.x != 0) {
+			this.position.x += this.velocity.x 
+		}
+		else {
+			this.position.y += this.velocity.y
+		}
 		
 	}
 
@@ -119,19 +123,21 @@ const keys = {
 
 let lastKey = ''
 
-const map = [['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-'],
-			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', '-', '-','-', ' ', '-', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', '-',' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', '-', ' ', ' ',' ', '-', '-', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', '-',' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', '-', '-','-', ' ', '-', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', '-',' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', '-', ' ', ' ',' ', '-', '-', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', '-',' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', '-', '-','-', ' ', '-', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', '-'],
-			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-']
+const map = [['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', '-', ' ', ' ','-', ' ', ' ', ' ', ' ', '-', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-','-', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', '-', ' ', '-', '-', ' ', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ','-', '-', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-','-', '-', '-', '-','-', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', '-', ' ', ' ', '-', '-', '-', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-','-', ' ', '-', ' ', ' ', '-', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
 			]
 
 
@@ -220,6 +226,7 @@ function animate() {
 			player.velocity.y = 0
 			break
 		} else {
+			player.velocity.x = 0
 			player.velocity.y = -VELOCITY
 		}
 		}
@@ -242,6 +249,7 @@ function animate() {
 			break
 		} else {
 			player.velocity.x = -VELOCITY
+			player.velocity.y = 0
 		}
 		}
 	}
@@ -262,6 +270,7 @@ function animate() {
 			player.velocity.y = 0
 			break
 		} else {
+			player.velocity.x = 0
 			player.velocity.y = VELOCITY
 		}
 		}
@@ -284,6 +293,7 @@ function animate() {
 			break
 		} else {
 			player.velocity.x = VELOCITY
+			player.velocity.y = 0
 		}
 		}
 	}
