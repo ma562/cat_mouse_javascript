@@ -141,19 +141,254 @@ const map = [['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-
 			]
 
 
-const mapWidth = map[0].length * Boundary.width;
-const mapHeight = map.length * Boundary.height;
+const mapWidth = map[0].length * Boundary.width;		//number of columns
+const mapHeight = map.length * Boundary.height;			//number of rows
+
+
+//DIJKSTRA'S ALGORITHM
+// Define the Node object
+class Node {
+  constructor() {
+    this.value = 0;
+    this.coordinate_x = 0;
+    this.coordinate_y = 0;
+    this.prev_row = 0;
+    this.prev_col = 0;
+    this.visited = 0; // BOOL TO INT
+    this.s_d = 0;
+    this.north = null;
+    this.south = null;
+    this.east = null;
+    this.west = null;
+    this.next = null; // for writing to fastest times
+  }
+}
+
+function read_write_values(wall_mat) {
+	// console.log(wall_mat)
+	//This function codes in the path lengths of the map
+	const num_columns = map[0].length - 2
+  const num_rows = map.length - 2
+  const array = new Array(num_columns * num_rows); // create matrix of tiles
+  // console.log(map[0].length)
+  // console.log(map.length)
+  let k = 0;
+  // // 0th ROW IS WALL-LESS
+  for(let i = 0; i < map.length; i++) {
+  	if(i === 0 || i === (map.length - 1)) {
+  			//don't account for border walls
+  			continue;
+  	}
+
+  	for(let j = 0; j < map[0].length; j++) {
+  		if(j === 0 || j === (map[0].length - 1)) {
+  			//don't account for border walls
+  			continue;
+  		}
+  		if(wall_mat[i][j] === '-') {
+  			//we have a wall
+  			array[k] = num_columns * num_rows
+  		}
+  		else {
+  			//we have a path
+  			array[k] = 1
+  		}
+  		k++;
+  	}
+  }
+  return array;
+}
+
+function relax_node(node) {
+  let min = 32767; // SHORT MAX is 32767
+  let key_return = null; // The next node with the shortest distance to explore
+
+  if (node.north !== null) {
+    const north_node = node.north;
+
+    if (node.s_d + north_node.value < north_node.s_d) {
+      north_node.s_d = node.s_d + north_node.value;
+      north_node.prev_row = node.coordinate_x;
+      north_node.prev_col = node.coordinate_y;
+
+    }
+
+    if (north_node.s_d < min && !north_node.visited) {
+      min = north_node.s_d;
+      key_return = north_node;
+    }
+  }
+
+  if (node.west !== null) {
+    const west_node = node.west;
+
+    if (node.s_d + west_node.value < west_node.s_d) {
+      west_node.s_d = node.s_d + west_node.value;
+      west_node.prev_row = node.coordinate_x;
+      west_node.prev_col = node.coordinate_y;
+    }
+
+    if (west_node.s_d < min && !west_node.visited) {
+      min = west_node.s_d;
+      key_return = west_node;
+    }
+  }
+
+  if (node.east !== null) {
+    const east_node = node.east;
+
+    if (node.s_d + east_node.value < east_node.s_d) {
+      east_node.s_d = node.s_d + east_node.value;
+      east_node.prev_row = node.coordinate_x;
+      east_node.prev_col = node.coordinate_y;
+    }
+
+    if (east_node.s_d < min && !east_node.visited) {
+      min = east_node.s_d;
+      key_return = east_node;
+    }
+  }
+
+  if (node.south !== null) {
+    const south_node = node.south;
+
+    if (node.s_d + south_node.value < south_node.s_d) {
+      south_node.s_d = node.s_d + south_node.value;
+      south_node.prev_row = node.coordinate_x;
+      south_node.prev_col = node.coordinate_y;
+    }
+
+    if (south_node.s_d < min && !south_node.visited) {
+      min = south_node.s_d;
+      key_return = south_node;
+    }
+  }
+
+  node.visited = 1; // 1 instead of true
+  return key_return;
+}
+
+function relax_all(parent_node) {
+  for (let i = 0; i < 4; i++) {
+    const return_node = relax_node(parent_node);
+    if (return_node !== null) {
+      relax_all(return_node);
+    }
+  }
+}
+
+function grab_path(matrix, c_r, c_c, m_r, m_c, path_row, path_col) {
+  let ctr = 0;
+  console.log(matrix);
+
+  while (c_r !== m_r || c_c !== m_c) {
+    let val = matrix[c_r][c_c];
+    c_r = val.prev_row;
+    c_c = val.prev_col;
+    path_row[ctr] = c_r;
+    path_col[ctr] = c_c;
+    // console.log(path_row[ctr])
+    // console.log(path_col[ctr])
+    ctr++;
+
+  }
+
+  // Prevent loose ends of the array
+  path_row[ctr] = -1;
+  path_col[ctr] = -1;
+}
+
+function fastestTimes(values, cat_r, cat_c, mouse_r, mouse_c, row_path, col_path) {
+	//clear previous values of the paths
+	row_path.length = 0;
+	col_path.length = 0;		
+
+	const rows = (map.length - 2);
+	const columns = (map[0].length - 2);
+	const matrix = [];
+	let k = 0;
+
+	for (let i = 0; i < rows; i++) {
+    matrix[i] = [];
+    for (let j = 0; j < columns; j++) {
+      const node = {
+        value: values[k],
+        coordinate_x: i,
+        coordinate_y: j,
+        prev_row: 0,
+        prev_col: 0,
+        visited: 0,
+        s_d: 32767,
+        north: null,
+        south: null,
+        east: null,
+        west: null,
+        next: null,
+      };
+      matrix[i][j] = node;
+      k++;
+    }
+  }
+
+  // Connect neighboring nodes
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < columns; j++) {
+      if (i === 0) {
+        // First row
+        matrix[i][j].north = null;
+      } else {
+        matrix[i][j].north = matrix[i - 1][j];
+      }
+      if (j === 0) {
+        // First column
+        matrix[i][j].west = null;
+      } else {
+        matrix[i][j].west = matrix[i][j - 1];
+      }
+      if (i === rows - 1) {
+        // Last row
+        matrix[i][j].south = null;
+      } else {
+        matrix[i][j].south = matrix[i + 1][j];
+      }
+      if (j === columns - 1) {
+        // Last column
+        matrix[i][j].east = null;
+      } else {
+        matrix[i][j].east = matrix[i][j + 1];
+      }
+    }
+  }
+
+
+  const parent_node = matrix[mouse_r][mouse_c];
+  parent_node.s_d = parent_node.value;
+
+  relax_all(parent_node);
+
+  grab_path(matrix, cat_r, cat_c, mouse_r, mouse_c, row_path, col_path);
+
+}
+
+
+
+//DIJKSTRA' ALGORITHM
+
+
+
 
 
 
 // Calculate offsets to center the map
 const offsetX = Math.floor((canvas.width - mapWidth) / 2);
 const offsetY = Math.floor((canvas.height - mapHeight) / 2);
+const startingX = offsetX + Boundary.width + Boundary.width / 2;
+const startingY = offsetY + Boundary.width + Boundary.width / 2
 
 const cat = new Cat({
 	position: {
-		x: offsetX + Boundary.width + Boundary.width / 2,
-		y: offsetY + Boundary.width + Boundary.width / 2
+		x: startingX,
+		y: startingY
 	},
 	velocity: {
 		x: 0,
@@ -165,8 +400,8 @@ const player = new Player({
 	position: {
 		// x: offsetX + Boundary.width + Boundary.width / 2,
 		// y: offsetY + Boundary.width + Boundary.width / 2
-		x: offsetX + Boundary.width + Boundary.width / 2,
-		y: offsetY + Boundary.width + Boundary.width / 2
+		x: startingX + (Boundary.width * (map[0].length - 3)),
+		y: startingY + (Boundary.width * (map.length - 3))
 	 },
 	 velocity: {
 	 	x:0,
@@ -205,9 +440,25 @@ function circleCollidesWithRectangle({
 			&& circle.position.x - circle.radius + circle.velocity.x <= rectangle.position.x + rectangle.width)
 }
 
+let animate_iteration = 0;
+let path_iteration = 0;
+let rows = []
+let col = []
+
+function get_discrete_X(position_x) {
+	return parseInt((position_x - startingX) / (Boundary.width));
+}
+
+function get_discrete_Y(position_y) {
+	return parseInt((position_y - startingY) / (Boundary.height));
+}
+
 function animate() {
+
 	requestAnimationFrame(animate)
 	c.clearRect(0, 0, canvas.width, canvas.height)
+
+	animate_iteration++;
 
 	if (keys.w.pressed && lastKey === 'w') {
 		for (let i = 0; i < boundaries.length; i++) {
@@ -310,16 +561,64 @@ function animate() {
 		}
 
 	})
-
 	player.update()
-	cat.update()
-	// console.log(player.position);
-	// console.log(player.position)
-	// player.velocity.y = 0
-	// player.velocity.x = 0
+	if(path_iteration <= rows.length) {
+		console.log(rows)
+		console.log(col)
+		cat.draw()
+		console.log(cat.position.x)
+		console.log(col[path_iteration])
+		
+
+		// cat.position.x += ((col[path_iteration] - cat.position.x)) * 3;
+		// cat.position.y += ((rows[path_iteration] - cat.position.y)) * 3;
+		path_iteration++;
+	}
+
+	
+
+	if(animate_iteration % 500 === 0) {
+		//update CAT
+		my_matrix = read_write_values(map)
+		// console.log(my_matrix)
+		// console.log(get_discrete_Y(cat.position.y))
+		// console.log(get_discrete_X(cat.position.x))
+		// console.log(cat.position)
+		// console.log(player.position)
+		// console.log(get_discrete_Y(player.position.y))
+		// console.log(get_discrete_X(player.position.x))
+		// console.log(rows)
+		// console.log(col)
+
+		fastestTimes(my_matrix, get_discrete_Y(cat.position.y), get_discrete_X(cat.position.x), get_discrete_Y(player.position.y), get_discrete_X(player.position.x), rows, col)
+		path_iteration = 0;
+	}
+	if(animate_iteration === 0) {
+		cat.update()
+	}
+	
+
 }
 
 animate()
+
+
+// console.log(my_matrix)
+
+
+// console.log(player.position);
+// //calculate how many tiles across
+// console.log(Boundary.width * (map[0].length - 3))
+// console.log(Boundary.height * (map.length - 3))
+// console.log(player.position.y)
+// console.log(player.position.x)
+// let myStart_x = 
+// let myStart_y = 
+// fastestTimes(my_matrix, 4, 4, myStart_y, myStart_x, rows, )
+
+// console.log(rows)
+// console.log(paths)
+
 
 window.addEventListener('keydown', ({key}) => {
 	switch (key) {
