@@ -442,6 +442,7 @@ function circleCollidesWithRectangle({
 
 let animate_iteration = 0;
 let path_iteration = 0;
+let inner_path_iteration = 0;
 let rows = []
 let col = []
 
@@ -562,22 +563,54 @@ function animate() {
 
 	})
 	player.update()
-	if(path_iteration <= rows.length) {
-		console.log(rows)
-		console.log(col)
-		cat.draw()
-		console.log(cat.position.x)
-		console.log(col[path_iteration])
+	if((rows.length !== 0) && (col.length !== 0) && (rows[path_iteration] !== -1) && (col[path_iteration] !== -1)) {
+		// if(rows[path_iteration] === -1 || col[path_iteration] === -1) {
+		// 	break;
+		// 
+		//speed of cat should be either 2, 4, 5 (multiple of 40 which is the width of a square)
 		
-
+		// console.log(rows)
+		// console.log(col)
+		// cat.draw()
+		// console.log(cat.position.x)
+		// console.log(col[path_iteration])
+		console.log(cat.position);
+		cat.draw();
+		cat_speed = 2;
+		if(inner_path_iteration * cat_speed < Boundary.width) {
+			//let the cat keep going
+			//find our current direction
+			if(path_iteration !== 0) {
+				x_direction = rows[path_iteration] - rows[path_iteration - 1];
+				y_direction = col[path_iteration] - col[path_iteration - 1];
+			}
+			else {
+				x_direction = 0;
+				y_direction = 0;
+			}
+			console.log(rows)
+			console.log(col)
+			console.log("iteration");
+			console.log(path_iteration);
+			console.log("my directions")
+			console.log(x_direction);
+			console.log(y_direction);
+			cat.position.x += y_direction * cat_speed;
+			cat.position.y += x_direction * cat_speed;
+			inner_path_iteration++;
+		}
+		else {
+			path_iteration++;
+			inner_path_iteration = 0;
+		}
 		// cat.position.x += ((col[path_iteration] - cat.position.x)) * 3;
 		// cat.position.y += ((rows[path_iteration] - cat.position.y)) * 3;
-		path_iteration++;
+		
 	}
 
 	
 
-	if(animate_iteration % 500 === 0) {
+	if(animate_iteration % 100 === 0) {
 		//update CAT
 		my_matrix = read_write_values(map)
 		// console.log(my_matrix)
@@ -592,6 +625,10 @@ function animate() {
 
 		fastestTimes(my_matrix, get_discrete_Y(cat.position.y), get_discrete_X(cat.position.x), get_discrete_Y(player.position.y), get_discrete_X(player.position.x), rows, col)
 		path_iteration = 0;
+		inner_path_iteration = 0;
+		console.log(rows)
+		console.log(col)
+		console.log(cat.position);
 	}
 	if(animate_iteration === 0) {
 		cat.update()
