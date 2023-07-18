@@ -71,7 +71,7 @@ class Cat {
 		// this.radius = 15
 		this.image = new Image();
     	this.image.src = 'cat3.png';
-    	this.radius = 15; // Adjust the radius of the player image
+    	this.radius = 18; // Adjust the radius of the player image
 	}
 
 
@@ -279,7 +279,7 @@ function relax_all(parent_node) {
 
 function grab_path(matrix, c_r, c_c, m_r, m_c, path_row, path_col) {
   let ctr = 0;
-  console.log(matrix);
+  // console.log(matrix);
 
   while (c_r !== m_r || c_c !== m_c) {
     let val = matrix[c_r][c_c];
@@ -290,9 +290,7 @@ function grab_path(matrix, c_r, c_c, m_r, m_c, path_row, path_col) {
     // console.log(path_row[ctr])
     // console.log(path_col[ctr])
     ctr++;
-
   }
-
   // Prevent loose ends of the array
   path_row[ctr] = -1;
   path_col[ctr] = -1;
@@ -385,6 +383,12 @@ const offsetY = Math.floor((canvas.height - mapHeight) / 2);
 const startingX = offsetX + Boundary.width + Boundary.width / 2;
 const startingY = offsetY + Boundary.width + Boundary.width / 2
 
+
+console.log("my values");
+console.log(startingX);
+console.log(startingY);
+console.log("............");
+
 const cat = new Cat({
 	position: {
 		x: startingX,
@@ -443,6 +447,8 @@ function circleCollidesWithRectangle({
 let animate_iteration = 0;
 let path_iteration = 0;
 let inner_path_iteration = 0;
+let x_direction = 0;
+let y_direction = 0;
 let rows = []
 let col = []
 
@@ -452,6 +458,14 @@ function get_discrete_X(position_x) {
 
 function get_discrete_Y(position_y) {
 	return parseInt((position_y - startingY) / (Boundary.height));
+}
+
+function get_continuous_X(position_x) {
+	return position_x * Boundary.width + startingY;
+}
+
+function get_continuous_Y(position_y) {
+	return position_y * Boundary.height + startingX;
 }
 
 function animate() {
@@ -563,6 +577,7 @@ function animate() {
 
 	})
 	player.update()
+	cat.draw();
 	if((rows.length !== 0) && (col.length !== 0) && (rows[path_iteration] !== -1) && (col[path_iteration] !== -1)) {
 		// if(rows[path_iteration] === -1 || col[path_iteration] === -1) {
 		// 	break;
@@ -574,34 +589,80 @@ function animate() {
 		// cat.draw()
 		// console.log(cat.position.x)
 		// console.log(col[path_iteration])
-		console.log(cat.position);
-		cat.draw();
-		cat_speed = 2;
-		if(inner_path_iteration * cat_speed < Boundary.width) {
-			//let the cat keep going
-			//find our current direction
-			if(path_iteration !== 0) {
-				x_direction = rows[path_iteration] - rows[path_iteration - 1];
-				y_direction = col[path_iteration] - col[path_iteration - 1];
-			}
-			else {
-				x_direction = 0;
-				y_direction = 0;
-			}
-			console.log(rows)
-			console.log(col)
-			console.log("iteration");
-			console.log(path_iteration);
-			console.log("my directions")
-			console.log(x_direction);
-			console.log(y_direction);
-			cat.position.x += y_direction * cat_speed;
-			cat.position.y += x_direction * cat_speed;
-			inner_path_iteration++;
+		// console.log(cat.position);
+		
+		cat_speed = 6;
+
+		//check that we have not met our goal yet
+		//NOTE THAT THE LESS THAN DOES NOT INDICATE ANYTHING BECAUSE WE ARE GOING BOTH UP AND DOWN
+		//cat.position.x is for columns
+		//cat.position.y is for rows
+		let direction_row = get_continuous_X(rows[path_iteration]) - cat.position.y;
+		let direction_col = get_continuous_Y(col[path_iteration]) - cat.position.x;
+
+		if (direction_row) {
+		    direction_row = direction_row > 0 ? 1 : -1;
+		} else {
+		    direction_row = 0;
 		}
-		else {
+
+		if (direction_col) {
+		    direction_col = direction_col > 0 ? 1 : -1;
+		} else {
+		    direction_col = 0;
+		}
+
+		let new_row = cat.position.y + direction_row * cat_speed;
+		let new_col = cat.position.x + direction_col * cat_speed;
+
+		if (
+    (new_row < get_continuous_X(rows[path_iteration]) && direction_row > 0) ||
+    (new_row > get_continuous_X(rows[path_iteration]) && direction_row < 0) ||
+    (new_col < get_continuous_Y(col[path_iteration]) && direction_col > 0) ||
+    (new_col > get_continuous_Y(col[path_iteration]) && direction_col < 0)
+		) {
+
+			let go_to_row = get_continuous_X(rows[path_iteration]);
+			let go_to_col = get_continuous_Y(col[path_iteration]);
+			let row_vector = go_to_row - cat.position.y;
+			let col_vector = go_to_col - cat.position.x;
+
+			if(row_vector) {
+				if(row_vector > 0) {
+					cat.position.y += cat_speed;
+				}
+				else {
+					cat.position.y -= cat_speed;
+				}
+			}
+			else if(col_vector) {
+				if(col_vector > 0) {
+					cat.position.x += cat_speed;
+				}
+				else {
+					cat.position.x -= cat_speed;
+				}
+			}
+		}
+		else if(
+		(new_row >= get_continuous_X(rows[path_iteration]) && direction_row > 0) ||
+    (new_row <= get_continuous_X(rows[path_iteration]) && direction_row < 0) ||
+    (new_col >= get_continuous_Y(col[path_iteration]) && direction_col > 0) ||
+    (new_col <= get_continuous_Y(col[path_iteration]) && direction_col < 0)
+		)
+		{
+
+			let go_to_row = get_continuous_X(rows[path_iteration]);
+			let go_to_col = get_continuous_Y(col[path_iteration]);
+			let row_vector = go_to_row - cat.position.y;
+			let col_vector = go_to_col - cat.position.x;
+			if(row_vector) {
+				cat.position.y = go_to_row;
+			}
+			else if(col_vector) {
+				cat.position.x = go_to_col;
+			}
 			path_iteration++;
-			inner_path_iteration = 0;
 		}
 		// cat.position.x += ((col[path_iteration] - cat.position.x)) * 3;
 		// cat.position.y += ((rows[path_iteration] - cat.position.y)) * 3;
@@ -610,7 +671,8 @@ function animate() {
 
 	
 
-	if(animate_iteration % 100 === 0) {
+	if(animate_iteration % 25 === 0) {
+
 		//update CAT
 		my_matrix = read_write_values(map)
 		// console.log(my_matrix)
@@ -622,13 +684,12 @@ function animate() {
 		// console.log(get_discrete_X(player.position.x))
 		// console.log(rows)
 		// console.log(col)
-
 		fastestTimes(my_matrix, get_discrete_Y(cat.position.y), get_discrete_X(cat.position.x), get_discrete_Y(player.position.y), get_discrete_X(player.position.x), rows, col)
 		path_iteration = 0;
 		inner_path_iteration = 0;
 		console.log(rows)
 		console.log(col)
-		console.log(cat.position);
+		// console.log(cat.position);
 	}
 	if(animate_iteration === 0) {
 		cat.update()
