@@ -27,7 +27,7 @@ class Player {
 		this.velocity = velocity
 		this.image = new Image();
     	this.image.src = 'mouse3.png';
-    	this.radius = 18; // Adjust the radius of the player image
+    	this.radius = 18.5; // Adjust the radius of the player image
 	}
 
 
@@ -453,11 +453,11 @@ let rows = []
 let col = []
 
 function get_discrete_X(position_x) {
-	return parseInt((position_x - startingX) / (Boundary.width));
+	return parseInt((position_x - startingX + 1) / (Boundary.width));		// + 1 is to fix a rounding error
 }
 
 function get_discrete_Y(position_y) {
-	return parseInt((position_y - startingY) / (Boundary.height));
+	return parseInt((position_y - startingY + 1) / (Boundary.height));	// + 1 is to fix a rounding error
 }
 
 function get_continuous_X(position_x) {
@@ -591,7 +591,7 @@ function animate() {
 		// console.log(col[path_iteration])
 		// console.log(cat.position);
 		
-		cat_speed = 6;
+		cat_speed = 5;
 
 		//check that we have not met our goal yet
 		//NOTE THAT THE LESS THAN DOES NOT INDICATE ANYTHING BECAUSE WE ARE GOING BOTH UP AND DOWN
@@ -614,7 +614,7 @@ function animate() {
 
 		let new_row = cat.position.y + direction_row * cat_speed;
 		let new_col = cat.position.x + direction_col * cat_speed;
-
+		console.log("moving lazy cat");
 		if (
     (new_row < get_continuous_X(rows[path_iteration]) && direction_row > 0) ||
     (new_row > get_continuous_X(rows[path_iteration]) && direction_row < 0) ||
@@ -671,7 +671,7 @@ function animate() {
 
 	
 
-	if(animate_iteration % 25 === 0) {
+	if(animate_iteration % 75 === 0) {
 
 		//update CAT
 		my_matrix = read_write_values(map)
@@ -680,6 +680,8 @@ function animate() {
 		// console.log(get_discrete_X(cat.position.x))
 		// console.log(cat.position)
 		// console.log(player.position)
+		// console.log(cat.position);
+		// console.log(player.position);
 		// console.log(get_discrete_Y(player.position.y))
 		// console.log(get_discrete_X(player.position.x))
 		// console.log(rows)
