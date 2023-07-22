@@ -1,9 +1,51 @@
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
 const VELOCITY = 3;
+let go_flag = false;		//go flag ensures the cat moves to the nearest discrete position before updating the shortest path algo
+let gameOver = false;		//checks if the game is over
+
+const map = [['-', '-', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', '-', ' ', ' ','-', ' ', ' ', ' ', ' ', '-', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-','-', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', '-', ' ', '-', '-', ' ', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ','-', '-', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-','-', '-', '-', '-','-', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', '-', ' ', ' ', '-', '-', '-', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-','-', ' ', '-', ' ', ' ', '-', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
+			]
 
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
+
+function updateScoreboard(score) {
+  const scoreboardElement = document.getElementById('scoreboard');
+  scoreboardElement.textContent = 'Score: ' + score + ' - High Score: ' + 34;
+
+  // Get the size of the maze (canvas) and the scoreboard element
+  const mazeWidth = canvas.width;
+  const scoreboardWidth = scoreboardElement.clientWidth;
+  const scoreboardHeight = scoreboardElement.clientHeight;
+
+  // Set the padding from the top and right edges of the maze
+  const paddingFromTop = 20;
+  const paddingFromRight = 20;
+
+  // Calculate the top and right positions for the scoreboard
+  const scoreboardTop = paddingFromTop;
+  const scoreboardRight = mazeWidth - paddingFromRight - scoreboardWidth;
+
+  // Position the scoreboard element
+  scoreboardElement.style.position = 'fixed';
+  scoreboardElement.style.top = scoreboardTop + 'px';
+  scoreboardElement.style.right = scoreboardRight + 'px';
+}
 
 class Boundary {
 	static width = 40
@@ -16,7 +58,30 @@ class Boundary {
 
 	draw() {
 		//c.drawImage(this.image, this.position.x, this.position.y)
-		c.fillStyle = 'green'
+		if(get_discrete_X(this.position.x) < 0 || 
+			get_discrete_Y(this.position.y) < 0 ||
+			get_discrete_X(this.position.x) > map.length - 4 ||
+			get_discrete_Y(this.position.y) > map[0].length - 4
+			) {
+			
+			// if(((get_discrete_X(this.position.x) === 1 || get_discrete_X(this.position.x) === 2) && 
+			// 	(get_discrete_Y(this.position.y) < 0)) ||
+			// 	((get_discrete_X(this.position.x) === map.length - 5 || get_discrete_X(this.position.x) === map.length - 6) &&
+   //      (get_discrete_Y(this.position.y) > map[0].length - 4))
+			// 	) {
+			// 	console.log(this.position.x)
+			// 	c.fillStyle = 'transparent'
+			// }
+			// else {
+			// 	c.fillStyle = 'green'
+			// }
+			c.fillStyle = 'green'
+			
+		}
+		else {
+			c.fillStyle = 'black'
+		}
+		
 		c.fillRect(this.position.x, this.position.y, this.width, this.height)
 	}
 }
@@ -122,24 +187,6 @@ const keys = {
 }
 
 let lastKey = ''
-
-const map = [['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
-			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', '-', ' ', ' ','-', ' ', ' ', ' ', ' ', '-', '-', ' ', '-'],
-			 ['-', ' ', '-', ' ', ' ', '-','-', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', '-', ' ', '-', '-', ' ', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', ' ','-', '-', '-', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', ' ', '-','-', '-', '-', '-','-', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', '-', ' ', ' ', '-', '-', '-', '-'],
-			 ['-', ' ', '-', ' ', ' ', '-',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', ' ', '-',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', ' ', '-','-', ' ', '-', ' ', ' ', '-', '-', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
-			]
-
 
 const mapWidth = map[0].length * Boundary.width;		//number of columns
 const mapHeight = map.length * Boundary.height;			//number of rows
@@ -368,15 +415,6 @@ function fastestTimes(values, cat_r, cat_c, mouse_r, mouse_c, row_path, col_path
 
 }
 
-
-
-//DIJKSTRA' ALGORITHM
-
-
-
-
-
-
 // Calculate offsets to center the map
 const offsetX = Math.floor((canvas.width - mapWidth) / 2);
 const offsetY = Math.floor((canvas.height - mapHeight) / 2);
@@ -404,7 +442,7 @@ const player = new Player({
 	position: {
 		// x: offsetX + Boundary.width + Boundary.width / 2,
 		// y: offsetY + Boundary.width + Boundary.width / 2
-		x: startingX + (Boundary.width * (map[0].length - 3)),
+		x: startingX + (Boundary.width * (map[0].length - 4)),
 		y: startingY + (Boundary.width * (map.length - 3))
 	 },
 	 velocity: {
@@ -468,7 +506,26 @@ function get_continuous_Y(position_y) {
 	return position_y * Boundary.height + startingX;
 }
 
+function checkCollisionAndRestart() {
+  if (!gameOver && (get_discrete_Y(player.position.y) === get_discrete_Y(cat.position.y)) &&
+    (get_discrete_X(player.position.x) === get_discrete_X(cat.position.x))) {
+    gameOver = true;
+    alert("game over");
+    window.location.reload();
+  }
+}
+
 function animate() {
+	updateScoreboard(player.position.y);
+	if(get_discrete_Y(player.position.y) < 0) {
+		alert("we have reached our final densitation")
+	}
+	// if((get_discrete_Y(player.position.y) === get_discrete_Y(cat.position.y)) && 
+	// 	(get_discrete_X(player.position.x) === get_discrete_X(cat.position.x))) {
+	// 	alert("game over");
+	// 	window.location.reload();
+	// }
+	checkCollisionAndRestart()
 
 	requestAnimationFrame(animate)
 	c.clearRect(0, 0, canvas.width, canvas.height)
@@ -578,6 +635,7 @@ function animate() {
 	})
 	player.update()
 	cat.draw();
+	let movement_in_progress = false;
 	if((rows.length !== 0) && (col.length !== 0) && (rows[path_iteration] !== -1) && (col[path_iteration] !== -1)) {
 		// if(rows[path_iteration] === -1 || col[path_iteration] === -1) {
 		// 	break;
@@ -591,10 +649,9 @@ function animate() {
 		// console.log(col[path_iteration])
 		// console.log(cat.position);
 		
-		cat_speed = 5;
-
+		cat_speed = 3;
+		
 		//check that we have not met our goal yet
-		//NOTE THAT THE LESS THAN DOES NOT INDICATE ANYTHING BECAUSE WE ARE GOING BOTH UP AND DOWN
 		//cat.position.x is for columns
 		//cat.position.y is for rows
 		let direction_row = get_continuous_X(rows[path_iteration]) - cat.position.y;
@@ -614,14 +671,14 @@ function animate() {
 
 		let new_row = cat.position.y + direction_row * cat_speed;
 		let new_col = cat.position.x + direction_col * cat_speed;
-		console.log("moving lazy cat");
 		if (
     (new_row < get_continuous_X(rows[path_iteration]) && direction_row > 0) ||
     (new_row > get_continuous_X(rows[path_iteration]) && direction_row < 0) ||
     (new_col < get_continuous_Y(col[path_iteration]) && direction_col > 0) ||
     (new_col > get_continuous_Y(col[path_iteration]) && direction_col < 0)
 		) {
-
+			console.log("FIRST IF");
+		  movement_in_progress = true;
 			let go_to_row = get_continuous_X(rows[path_iteration]);
 			let go_to_col = get_continuous_Y(col[path_iteration]);
 			let row_vector = go_to_row - cat.position.y;
@@ -651,7 +708,7 @@ function animate() {
     (new_col <= get_continuous_Y(col[path_iteration]) && direction_col < 0)
 		)
 		{
-
+			console.log("SECOND IF");
 			let go_to_row = get_continuous_X(rows[path_iteration]);
 			let go_to_col = get_continuous_Y(col[path_iteration]);
 			let row_vector = go_to_row - cat.position.y;
@@ -662,7 +719,15 @@ function animate() {
 			else if(col_vector) {
 				cat.position.x = go_to_col;
 			}
+			movement_in_progress = false;
+			console.log("SET TO FALSE");
 			path_iteration++;
+		}
+		else {
+			console.log("WE HIT THE ELSE");
+			console.log(cat.position);
+			console.log(rows)
+			console.log(col);
 		}
 		// cat.position.x += ((col[path_iteration] - cat.position.x)) * 3;
 		// cat.position.y += ((rows[path_iteration] - cat.position.y)) * 3;
@@ -671,9 +736,16 @@ function animate() {
 
 	
 
-	if(animate_iteration % 75 === 0) {
+	if(animate_iteration % 10 === 0) {
+		go_flag = true;
+		// console.log(movement_in_progress);
+	}
 
+	if(animate_iteration === 1 || (go_flag && !movement_in_progress)) {
 		//update CAT
+		console.log("ENTERED");
+		console.log(movement_in_progress);
+		console.log("^^^^");
 		my_matrix = read_write_values(map)
 		// console.log(my_matrix)
 		// console.log(get_discrete_Y(cat.position.y))
@@ -691,33 +763,17 @@ function animate() {
 		inner_path_iteration = 0;
 		console.log(rows)
 		console.log(col)
-		// console.log(cat.position);
+
+		go_flag = false;		//reset go_flag so we have to wait until the next iteration to update shortest path
 	}
-	if(animate_iteration === 0) {
-		cat.update()
-	}
+	// if(animate_iteration === 0) {
+	// 	cat.update()
+	// }
 	
 
 }
 
 animate()
-
-
-// console.log(my_matrix)
-
-
-// console.log(player.position);
-// //calculate how many tiles across
-// console.log(Boundary.width * (map[0].length - 3))
-// console.log(Boundary.height * (map.length - 3))
-// console.log(player.position.y)
-// console.log(player.position.x)
-// let myStart_x = 
-// let myStart_y = 
-// fastestTimes(my_matrix, 4, 4, myStart_y, myStart_x, rows, )
-
-// console.log(rows)
-// console.log(paths)
 
 
 window.addEventListener('keydown', ({key}) => {
@@ -757,12 +813,4 @@ window.addEventListener('keyup', ({key}) => {
 			break
 	}
 })
-
-
-
-
-
-
-
-
 
