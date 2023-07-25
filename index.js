@@ -2,6 +2,7 @@ const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
 const VELOCITY = 3;
 let go_flag = false;		//go flag ensures the cat moves to the nearest discrete position before updating the shortest path algo
+let go_flag2 = false;
 let gameOver = false;		//checks if the game is over
 
 const mapCollection = {
@@ -268,19 +269,6 @@ class Boundary {
 			get_discrete_X(this.position.x) > map.length - 4 ||
 			get_discrete_Y(this.position.y) > map[0].length - 4
 			) {
-			
-			// if(((get_discrete_X(this.position.x) === 1 || get_discrete_X(this.position.x) === 2) && 
-			// 	(get_discrete_Y(this.position.y) < 0)) ||
-			// 	((get_discrete_X(this.position.x) === map.length - 5 || get_discrete_X(this.position.x) === map.length - 6) &&
-   //      (get_discrete_Y(this.position.y) > map[0].length - 4))
-			// 	) {
-			// 	console.log(this.position.x)
-			// 	c.fillStyle = 'transparent'
-			// }
-			// else {
-			// 	c.fillStyle = 'green'
-			// }
-
       if((get_discrete_X(this.position.x) === map.length - 5 || get_discrete_X(this.position.x) === map.length - 6) &&
       (get_discrete_Y(this.position.y) > map[0].length - 4)) {
         c.fillStyle = 'transparent';
@@ -327,6 +315,14 @@ class Player {
 
   }
 
+  mouse_is_scared() {
+    this.image.src = 'scared_mouse.png';
+  }
+
+  mouse_is_not_scared() {
+    this.image.src = 'mouse3.png';
+  }
+
 	update() {
 		this.draw()
 		//no going horizontal
@@ -347,7 +343,7 @@ class Cat {
 		this.velocity = velocity
 		// this.radius = 15
 		this.image = new Image();
-    	this.image.src = 'cat3.png';
+    	this.image.src = 'birdie.png';
     	this.radius = 18; // Adjust the radius of the player image
 	}
 
@@ -369,6 +365,10 @@ class Cat {
       imageRadius * 2
     );
 
+  }
+
+  updateImage() {
+    this.image.src = "mouse3.png";
   }
 
 	update() {
@@ -675,6 +675,18 @@ const cat = new Cat({
 	}
 })
 
+//CAT2
+const cat2 = new Cat({
+  position: {
+    x: startingX,
+    y: startingY
+  },
+  velocity: {
+    x: 0,
+    y: 0
+  }
+})
+
 const player = new Player({
 	position: {
 		x: startingX + (Boundary.width * (map[0].length - 4)),
@@ -715,11 +727,15 @@ function circleCollidesWithRectangle({
 
 let animate_iteration = 0;
 let path_iteration = 0;
-let inner_path_iteration = 0;
+let path_iteration2 = 0;
+// let inner_path_iteration = 0;
 let x_direction = 0;
 let y_direction = 0;
 let rows = []
 let col = []
+
+let rows2 = []
+let col2 = []
 
 function get_discrete_X(position_x) {
 	return parseInt((position_x - startingX + 1) / (Boundary.width));		// + 1 is to fix a rounding error
@@ -753,6 +769,7 @@ function checkCollision(playerX, playerY, catX, catY) {
 
 function checkCollisionAndRestart() {
   if (!gameOver && checkCollision(player.position.x, player.position.y, cat.position.x, cat.position.y)) {
+    cat.updateImage();
     gameOver = true;
     localStorage.setItem('currentScore', 0);
     alert("Game Over");
@@ -879,11 +896,21 @@ function animate() {
 
 	})
 	player.update()
+
+  if(rows.length !== 0 && rows.length < 8) {
+    player.mouse_is_scared();
+  }
+  else {
+    player.mouse_is_not_scared();
+  }
 	cat.draw();
+  // cat2.draw();
+
+
 	let movement_in_progress = false;
 	if((rows.length !== 0) && (col.length !== 0) && (rows[path_iteration] !== -1) && (col[path_iteration] !== -1)) {
 		
-		cat_speed = 3;
+		cat_speed = 2;
 		
 		//check that we have not met our goal yet
 		//cat.position.x is for columns
@@ -959,12 +986,95 @@ function animate() {
 		
 	}
 
+  let movement_in_progress2 = false;
+  if((rows2.length !== 0) && (col2.length !== 0) && (rows2[path_iteration2] !== -1) && (col2[path_iteration2] !== -1)) {
+    
+    cat_speed = 3;
+    
+    //check that we have not met our goal yet
+    //cat.position.x is for columns
+    //cat.position.y is for rows
+    let direction_row = get_continuous_X(rows2[path_iteration2]) - cat2.position.y;
+    let direction_col = get_continuous_Y(col2[path_iteration2]) - cat2.position.x;
+
+    if (direction_row) {
+        direction_row = direction_row > 0 ? 1 : -1;
+    } else {
+        direction_row = 0;
+    }
+
+    if (direction_col) {
+        direction_col = direction_col > 0 ? 1 : -1;
+    } else {
+        direction_col = 0;
+    }
+
+    let new_row = cat2.position.y + direction_row * cat_speed;
+    let new_col = cat2.position.x + direction_col * cat_speed;
+
+
+    if (
+    (new_row < get_continuous_X(rows2[path_iteration2]) && direction_row > 0) ||
+    (new_row > get_continuous_X(rows2[path_iteration2]) && direction_row < 0) ||
+    (new_col < get_continuous_Y(col2[path_iteration2]) && direction_col > 0) ||
+    (new_col > get_continuous_Y(col2[path_iteration2]) && direction_col < 0)
+    ) {
+      movement_in_progress2 = true;
+      let go_to_row = get_continuous_X(rows2[path_iteration2]);
+      let go_to_col = get_continuous_Y(col2[path_iteration2]);
+      let row_vector = go_to_row - cat2.position.y;
+      let col_vector = go_to_col - cat2.position.x;
+
+      if(row_vector) {
+        if(row_vector > 0) {
+          cat2.position.y += cat_speed;
+        }
+        else {
+          cat2.position.y -= cat_speed;
+        }
+      }
+      else if(col_vector) {
+        if(col_vector > 0) {
+          cat2.position.x += cat_speed;
+        }
+        else {
+          cat2.position.x -= cat_speed;
+        }
+      }
+    }
+    else if(
+    (new_row >= get_continuous_X(rows2[path_iteration2]) && direction_row > 0) ||
+    (new_row <= get_continuous_X(rows2[path_iteration2]) && direction_row < 0) ||
+    (new_col >= get_continuous_Y(col2[path_iteration2]) && direction_col > 0) ||
+    (new_col <= get_continuous_Y(col2[path_iteration2]) && direction_col < 0)
+    )
+    {
+      let go_to_row = get_continuous_X(rows2[path_iteration2]);
+      let go_to_col = get_continuous_Y(col2[path_iteration2]);
+      let row_vector = go_to_row - cat2.position.y;
+      let col_vector = go_to_col - cat2.position.x;
+      if(row_vector) {
+        cat2.position.y = go_to_row;
+      }
+      else if(col_vector) {
+        cat2.position.x = go_to_col;
+      }
+      movement_in_progress2 = false;
+      path_iteration2++;
+    }
+    
+  }
+
 	
 
-	if(animate_iteration % 300 === 0) {
+	if(animate_iteration % 100 === 0) {
 		go_flag = true;
 		// console.log(movement_in_progress);
 	}
+
+  if(animate_iteration % 100 === 0) {
+    go_flag2 = true;
+  }
 
 	if(animate_iteration === 1 || (go_flag && !movement_in_progress)) {
 		//update CAT
@@ -974,10 +1084,23 @@ function animate() {
 		fastestTimes(my_matrix, get_discrete_Y(cat.position.y), get_discrete_X(cat.position.x), get_discrete_Y(player.position.y), get_discrete_X(player.position.x), rows, col)
 		
 		path_iteration = 0;
-		inner_path_iteration = 0;
+		// inner_path_iteration = 0;
 
 		go_flag = false;		//reset go_flag so we have to wait until the next iteration to update shortest path
 	}
+
+  if(animate_iteration === 1 || (go_flag2 && !movement_in_progress2)) {
+    //update CAT
+
+    my_matrix2 = read_write_values(map)
+
+    fastestTimes(my_matrix2, get_discrete_Y(cat2.position.y), get_discrete_X(cat2.position.x), get_discrete_Y(player.position.y), get_discrete_X(player.position.x), rows2, col2)
+    
+    path_iteration2 = 0;
+    // inner_path_iteration = 0;
+
+    go_flag2 = false;    //reset go_flag so we have to wait until the next iteration to update shortest path
+  }
 
 }
 
