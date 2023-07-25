@@ -77,7 +77,76 @@ const mapCollection = {
 			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
 			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
   ],
+  map5: [
+    // Map 5 modified double vertical zig zag
+    ['-', '-', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
+       ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+       ['-', ' ', '-', '-', ' ', ' ','-', '-', '-', ' ', ' ', '-', '-', ' ', '-'],
+       ['-', ' ', '-', ' ', ' ', ' ',' ', '-', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+       ['-', ' ', '-', '-', '-', '-',' ', '-', ' ', '-', '-', '-', '-', ' ', '-'],
+       ['-', ' ', '-', ' ', ' ', ' ',' ', '-', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+       ['-', ' ', '-', ' ', '-', '-','-', '-', '-', '-', '-', ' ', '-', ' ', '-'],
+       ['-', ' ', '-', ' ', ' ', ' ',' ', '-', ' ', ' ',' ', ' ', '-', ' ', '-'],
+       ['-', ' ', '-', '-', '-', '-',' ', ' ', ' ', '-', '-', '-', '-', ' ', '-'],
+       ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+       ['-', ' ', ' ', ' ', '-', '-','-', '-', '-', '-', '-', ' ', ' ', ' ', '-'],
+       ['-', ' ', ' ', ' ', ' ', ' ',' ', '-', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+       ['-', ' ', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', ' ', '-'],
+       ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+       ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
+  ],
 };
+
+// Function to get a random map key that hasn't been used yet
+function getRandomUnusedMapKey() {
+  const mapKeys = Object.keys(mapCollection);
+  const usedMapKeys = JSON.parse(localStorage.getItem('usedMapKeys')) || [];
+
+  // Filter out the used map keys
+  const availableMapKeys = mapKeys.filter(key => !usedMapKeys.includes(key));
+
+  if (availableMapKeys.length === 0) {
+    // If all maps have been used once, reset the usedMapKeys to start reusing maps
+    localStorage.removeItem('usedMapKeys');
+    return getRandomUnusedMapKey();
+  }
+
+  const randomIndex = Math.floor(Math.random() * availableMapKeys.length);
+  return availableMapKeys[randomIndex];
+}
+
+// Function to get the map for the given key and mark it as used
+function getMapAndMarkUsed(mapKey) {
+  const map = mapCollection[mapKey];
+  let usedMapKeys = JSON.parse(localStorage.getItem('usedMapKeys')) || [];
+  usedMapKeys.push(mapKey);
+
+  // If all maps have been used once, reset the usedMapKeys to start reusing maps
+  if (usedMapKeys.length === Object.keys(mapCollection).length) {
+    usedMapKeys = [];
+    localStorage.removeItem('usedMapKeys'); // Clear the storage for reuse
+  }
+
+  localStorage.setItem('usedMapKeys', JSON.stringify(usedMapKeys));
+  return map;
+}
+
+let map;
+// Usage:
+const randomMapKey = getRandomUnusedMapKey();
+console.log(randomMapKey);
+if (randomMapKey) {
+  map = getMapAndMarkUsed(randomMapKey);
+  console.log(map);
+} else {
+  // Handle the case where all maps have been used once and start reusing maps
+  const reusedMapKey = getRandomUnusedMapKey();
+  if (reusedMapKey) {
+    map = getMapAndMarkUsed(reusedMapKey);
+  } else {
+    console.log('All maps have been used once. Starting to reuse maps.');
+  }
+}
 
 class PriorityQueue {
   constructor() {
@@ -180,8 +249,6 @@ class PriorityQueue {
 
 const pq = new PriorityQueue();
 
-let map = mapCollection.map4;
-
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
 
@@ -213,7 +280,14 @@ class Boundary {
 			// else {
 			// 	c.fillStyle = 'green'
 			// }
-			c.fillStyle = 'green'
+
+      if((get_discrete_X(this.position.x) === map.length - 5 || get_discrete_X(this.position.x) === map.length - 6) &&
+      (get_discrete_Y(this.position.y) > map[0].length - 4)) {
+        c.fillStyle = 'transparent';
+      }
+      else {
+        c.fillStyle = 'green'
+      }
 			
 		}
 		else {
@@ -349,13 +423,11 @@ class Node {
 }
 
 function read_write_values(wall_mat) {
-	// console.log(wall_mat)
 	//This function codes in the path lengths of the map
 	const num_columns = map[0].length - 2
   const num_rows = map.length - 2
   const array = new Array(num_columns * num_rows); // create matrix of tiles
-  // console.log(map[0].length)
-  // console.log(map.length)
+
   let k = 0;
   // // 0th ROW IS WALL-LESS
   for(let i = 0; i < map.length; i++) {
@@ -384,7 +456,6 @@ function read_write_values(wall_mat) {
 }
 
 function relax_node(node) {
-  // let min = 32767; // SHORT MAX is 32767
   let key_return = null; // The next node with the shortest distance to explore
 
   if (node.north !== null) {
@@ -444,17 +515,7 @@ function relax_node(node) {
   }
 
   node.visited = 1; // 1 instead of true
-  // return key_return;
 }
-
-// function relax_all(parent_node) {
-//   for (let i = 0; i < 4; i++) {
-//     const return_node = relax_node(parent_node);
-//     if (return_node !== null) {
-//       relax_all(return_node);
-//     }
-//   }
-// }
 
 function grab_path(matrix, c_r, c_c, m_r, m_c, path_row, path_col) {
   let ctr = 0;
@@ -466,8 +527,7 @@ function grab_path(matrix, c_r, c_c, m_r, m_c, path_row, path_col) {
     c_c = val.prev_col;
     path_row[ctr] = c_r;
     path_col[ctr] = c_c;
-    // console.log(path_row[ctr])
-    // console.log(path_col[ctr])
+
     ctr++;
   }
   // Prevent loose ends of the array
@@ -556,9 +616,33 @@ const offsetY = Math.floor((canvas.height - mapHeight) / 2);
 const startingX = offsetX + Boundary.width + Boundary.width / 2;
 const startingY = offsetY + Boundary.width + Boundary.width / 2
 
-function updateScoreboard(score) {
+function updateScoreboard(shouldIncreaseScore) {
+
+  // Get the current score from localStorage or initialize it if not present
+  let currentScore = parseInt(localStorage.getItem('currentScore')) || 0;
+
+  if (shouldIncreaseScore) {
+    // Increase the current score if the player is moving on to the next level
+    currentScore++;
+  }
+
+  // Get the high score from localStorage or initialize it if not present
+  let highScore = parseInt(localStorage.getItem('highScore')) || 0;
+
+  // Update the high score if the current score surpasses it
+  if (currentScore > highScore) {
+    highScore = currentScore;
+    // Save the new high score to localStorage
+    localStorage.setItem('highScore', highScore);
+  }
+
+  // Save the updated current score to localStorage
+  localStorage.setItem('currentScore', currentScore);
+
+  // Display the scores on the scoreboard element
   const scoreboardElement = document.getElementById('scoreboard');
-  scoreboardElement.textContent = 'Score: ' + score + ' - High Score: ' + 34;
+  scoreboardElement.textContent = 'Score: ' + currentScore + ' - High Score: ' + highScore;
+
 
   // Get the size of the maze (canvas) and the scoreboard element
   const mazeWidth = canvas.width;
@@ -593,8 +677,6 @@ const cat = new Cat({
 
 const player = new Player({
 	position: {
-		// x: offsetX + Boundary.width + Boundary.width / 2,
-		// y: offsetY + Boundary.width + Boundary.width / 2
 		x: startingX + (Boundary.width * (map[0].length - 4)),
 		y: startingY + (Boundary.width * (map.length - 3))
 	 },
@@ -611,15 +693,11 @@ map.forEach((row, i) => {
 			boundaries.push(
 				new Boundary({
 					position: {
-						// x: Boundary.width * j,
-						// y: Boundary.height * i
 						 x: offsetX + Boundary.width * j,
               		     y: offsetY + Boundary.height * i
 					}
 				})
 			)
-			// console.log(offsetX + Boundary.width * j)
-			// console.log(Boundary.width)
 			break
 		}
 	})
@@ -659,27 +737,41 @@ function get_continuous_Y(position_y) {
 	return position_y * Boundary.height + startingX;
 }
 
+function calculateDistance(x1, y1, x2, y2) {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
+function checkCollision(playerX, playerY, catX, catY) {
+  const collisionDistance = 35; // The collision distance in units
+
+  // Calculate the distance between the player and cat
+  const distance = calculateDistance(playerX, playerY, catX, catY);
+
+  // Return true if they are within the collision distance
+  return distance <= collisionDistance;
+}
+
 function checkCollisionAndRestart() {
-  if (!gameOver && (get_discrete_Y(player.position.y) === get_discrete_Y(cat.position.y)) &&
-    (get_discrete_X(player.position.x) === get_discrete_X(cat.position.x))) {
+  if (!gameOver && checkCollision(player.position.x, player.position.y, cat.position.x, cat.position.y)) {
     gameOver = true;
-    alert("game over");
+    localStorage.setItem('currentScore', 0);
+    alert("Game Over");
     window.location.reload();
   }
 }
 
 function animate() {
-	updateScoreboard(player.position.y);
+
+  checkCollisionAndRestart();
+  updateScoreboard(false);
+	
 	if(get_discrete_Y(player.position.y) < 0) {
-		alert("we have reached our final densitation")
-		// console.log(player.position);
+    //moving on to the next level
+    updateScoreboard(true);
+		window.location.reload();
 	}
-	// if((get_discrete_Y(player.position.y) === get_discrete_Y(cat.position.y)) && 
-	// 	(get_discrete_X(player.position.x) === get_discrete_X(cat.position.x))) {
-	// 	alert("game over");
-	// 	window.location.reload();
-	// }
-	checkCollisionAndRestart()
+  
+	
 
 	requestAnimationFrame(animate)
 	c.clearRect(0, 0, canvas.width, canvas.height)
@@ -790,17 +882,6 @@ function animate() {
 	cat.draw();
 	let movement_in_progress = false;
 	if((rows.length !== 0) && (col.length !== 0) && (rows[path_iteration] !== -1) && (col[path_iteration] !== -1)) {
-		// if(rows[path_iteration] === -1 || col[path_iteration] === -1) {
-		// 	break;
-		// 
-		//speed of cat should be either 2, 4, 5 (multiple of 40 which is the width of a square)
-		
-		// console.log(rows)
-		// console.log(col)
-		// cat.draw()
-		// console.log(cat.position.x)
-		// console.log(col[path_iteration])
-		// console.log(cat.position);
 		
 		cat_speed = 3;
 		
