@@ -4,7 +4,10 @@ const VELOCITY = 3;
 let go_flag = false;		//go flag ensures the cat moves to the nearest discrete position before updating the shortest path algo
 let gameOver = false;		//checks if the game is over
 
-const map = [['-', '-', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
+const mapCollection = {
+  map1: [
+    // Map 1 original map
+    ['-', '-', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
 			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
 			 ['-', ' ', '-', '-', ' ', ' ','-', ' ', ' ', ' ', ' ', '-', '-', ' ', '-'],
 			 ['-', ' ', '-', ' ', ' ', '-','-', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
@@ -16,36 +19,171 @@ const map = [['-', '-', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', '-
 			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', '-', ' ', ' ', '-', '-', '-', '-'],
 			 ['-', ' ', '-', ' ', ' ', '-',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
 			 ['-', ' ', '-', ' ', ' ', '-',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', ' ', ' ', '-','-', ' ', '-', ' ', ' ', '-', '-', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', '-', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-','-', ' ', ' ', ' ', ' ', '-', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
 			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
-			]
+  ],
+  map2: [
+  	// Map 2 three straight lines
+    ['-', '-', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', '-', '-', '-','-', '-', '-', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', '-', ' ',' ', '-', ' ', ' ', '-', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', '-', ' ',' ', '-', ' ', ' ', '-', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', '-', ' ',' ', '-', ' ', ' ','-', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', '-', ' ',' ', '-', ' ', ' ', '-', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', '-', ' ',' ', '-', ' ', ' ', '-', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ','-', '-', '-', '-', '-', '-', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
+  ],
+  map3: [
+  	// Map 3 zig zag 
+    ['-', '-', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', '-', '-', '-','-', '-', '-', '-', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', '-', '-', '-','-', '-', '-', '-', '-', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ',' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', '-', '-', '-','-', '-', '-', '-', '-', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', '-','-', '-', '-', '-', '-', '-', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
+  ],
+  map4: [
+  	// Map 4 double horizontal zig zag
+    ['-', '-', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', '-', ' ',' ', ' ', '-', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', '-', ' ','-', ' ', '-', ' ', '-', ' ', ' ', ' ', '-'],
+			 ['-', ' ', ' ', ' ', '-', ' ','-', ' ', '-', ' ', '-', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ','-', ' ', ' ', ' ', '-', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', '-', '-', '-','-', '-', '-', '-','-', '-', '-', ' ', '-'],
+			 ['-', ' ', '-', ' ', ' ', ' ','-', ' ', ' ', ' ', '-', ' ', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', '-', ' ','-', ' ', '-', ' ', '-', ' ', ' ', ' ', '-'],
+			 ['-', ' ', ' ', ' ', '-', ' ','-', ' ', '-', ' ', '-', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', ' ', '-', ' ',' ', ' ', '-', ' ', ' ', ' ', '-', ' ', '-'],
+			 ['-', ' ', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
+  ],
+};
+
+class PriorityQueue {
+  constructor() {
+    this.heap = [];
+  }
+
+  // Helper function to get the index of the parent of a node
+  getParentIndex(index) {
+    return Math.floor((index - 1) / 2);
+  }
+
+  // Helper function to get the index of the left child of a node
+  getLeftChildIndex(index) {
+    return 2 * index + 1;
+  }
+
+  // Helper function to get the index of the right child of a node
+  getRightChildIndex(index) {
+    return 2 * index + 2;
+  }
+
+  // Helper function to swap two elements in the heap
+  swap(index1, index2) {
+    const temp = this.heap[index1];
+    this.heap[index1] = this.heap[index2];
+    this.heap[index2] = temp;
+  }
+
+  clear() {
+    this.heap = [];
+  }
+
+  isEmpty() {
+    return this.heap.length === 0;
+  }
+
+  // Helper function to bubble up the element at the given index
+  bubbleUp(index) {
+    // If the current node is the root (index 0), no need to bubble up further
+    if (index === 0) return;
+
+    const parentIndex = this.getParentIndex(index);
+
+    // If the current node has higher priority (smaller s_d) than its parent, swap them and continue bubbling up
+    if (this.heap[index].s_d < this.heap[parentIndex].s_d) {
+      this.swap(index, parentIndex);
+      this.bubbleUp(parentIndex);
+    }
+  }
+
+  // Helper function to bubble down the element at the given index
+  bubbleDown(index) {
+    const leftChildIndex = this.getLeftChildIndex(index);
+    const rightChildIndex = this.getRightChildIndex(index);
+    let highestPriorityIndex = index;
+
+    // Find the node with the highest priority (smallest s_d) among the current node and its two children
+    if (
+      leftChildIndex < this.heap.length &&
+      this.heap[leftChildIndex].s_d < this.heap[highestPriorityIndex].s_d
+    ) {
+      highestPriorityIndex = leftChildIndex;
+    }
+
+    if (
+      rightChildIndex < this.heap.length &&
+      this.heap[rightChildIndex].s_d < this.heap[highestPriorityIndex].s_d
+    ) {
+      highestPriorityIndex = rightChildIndex;
+    }
+
+    // If the node with the highest priority is not the current node, swap them and continue bubbling down
+    if (highestPriorityIndex !== index) {
+      this.swap(index, highestPriorityIndex);
+      this.bubbleDown(highestPriorityIndex);
+    }
+  }
+
+  // Insert a new node into the priority queue
+  insert(node) {
+    this.heap.push(node);
+    this.bubbleUp(this.heap.length - 1);
+  }
+
+  // Remove and return the node with the highest priority (smallest s_d) from the priority queue
+  extractMin() {
+    if (this.heap.length === 0) return null;
+
+    // If there is only one node, remove and return it
+    if (this.heap.length === 1) return this.heap.pop();
+
+    // Otherwise, remove the node with the highest priority (root), replace it with the last node,
+    // and then bubble down the new root to its correct position
+    const minNode = this.heap[0];
+    this.heap[0] = this.heap.pop();
+    this.bubbleDown(0);
+    return minNode;
+  }
+}
+
+const pq = new PriorityQueue();
+
+let map = mapCollection.map4;
 
 canvas.width = window.innerWidth
 canvas.height = window.innerHeight
-
-function updateScoreboard(score) {
-  const scoreboardElement = document.getElementById('scoreboard');
-  scoreboardElement.textContent = 'Score: ' + score + ' - High Score: ' + 34;
-
-  // Get the size of the maze (canvas) and the scoreboard element
-  const mazeWidth = canvas.width;
-  const scoreboardWidth = scoreboardElement.clientWidth;
-  const scoreboardHeight = scoreboardElement.clientHeight;
-
-  // Set the padding from the top and right edges of the maze
-  const paddingFromTop = 20;
-  const paddingFromRight = 20;
-
-  // Calculate the top and right positions for the scoreboard
-  const scoreboardTop = paddingFromTop;
-  const scoreboardRight = mazeWidth - paddingFromRight - scoreboardWidth;
-
-  // Position the scoreboard element
-  scoreboardElement.style.position = 'fixed';
-  scoreboardElement.style.top = scoreboardTop + 'px';
-  scoreboardElement.style.right = scoreboardRight + 'px';
-}
 
 class Boundary {
 	static width = 40
@@ -166,7 +304,6 @@ class Cat {
 
 		
 	}
-
 }
 
 const boundaries = []
@@ -247,7 +384,7 @@ function read_write_values(wall_mat) {
 }
 
 function relax_node(node) {
-  let min = 32767; // SHORT MAX is 32767
+  // let min = 32767; // SHORT MAX is 32767
   let key_return = null; // The next node with the shortest distance to explore
 
   if (node.north !== null) {
@@ -259,11 +396,10 @@ function relax_node(node) {
       north_node.prev_col = node.coordinate_y;
 
     }
-
-    if (north_node.s_d < min && !north_node.visited) {
-      min = north_node.s_d;
-      key_return = north_node;
+    if(!north_node.visited) {
+      pq.insert(north_node);
     }
+    
   }
 
   if (node.west !== null) {
@@ -274,10 +410,8 @@ function relax_node(node) {
       west_node.prev_row = node.coordinate_x;
       west_node.prev_col = node.coordinate_y;
     }
-
-    if (west_node.s_d < min && !west_node.visited) {
-      min = west_node.s_d;
-      key_return = west_node;
+    if(!west_node.visited) {
+      pq.insert(west_node);
     }
   }
 
@@ -290,9 +424,8 @@ function relax_node(node) {
       east_node.prev_col = node.coordinate_y;
     }
 
-    if (east_node.s_d < min && !east_node.visited) {
-      min = east_node.s_d;
-      key_return = east_node;
+    if(!east_node.visited) {
+      pq.insert(east_node);
     }
   }
 
@@ -305,24 +438,23 @@ function relax_node(node) {
       south_node.prev_col = node.coordinate_y;
     }
 
-    if (south_node.s_d < min && !south_node.visited) {
-      min = south_node.s_d;
-      key_return = south_node;
+    if(!south_node.visited) {
+      pq.insert(south_node);
     }
   }
 
   node.visited = 1; // 1 instead of true
-  return key_return;
+  // return key_return;
 }
 
-function relax_all(parent_node) {
-  for (let i = 0; i < 4; i++) {
-    const return_node = relax_node(parent_node);
-    if (return_node !== null) {
-      relax_all(return_node);
-    }
-  }
-}
+// function relax_all(parent_node) {
+//   for (let i = 0; i < 4; i++) {
+//     const return_node = relax_node(parent_node);
+//     if (return_node !== null) {
+//       relax_all(return_node);
+//     }
+//   }
+// }
 
 function grab_path(matrix, c_r, c_c, m_r, m_c, path_row, path_col) {
   let ctr = 0;
@@ -408,9 +540,12 @@ function fastestTimes(values, cat_r, cat_c, mouse_r, mouse_c, row_path, col_path
 
   const parent_node = matrix[mouse_r][mouse_c];
   parent_node.s_d = parent_node.value;
-
-  relax_all(parent_node);
-
+  pq.clear();
+  pq.insert(parent_node);
+  while(!pq.isEmpty()) {
+    relax_node(pq.extractMin());
+  }
+  console.log(matrix);
   grab_path(matrix, cat_r, cat_c, mouse_r, mouse_c, row_path, col_path);
 
 }
@@ -421,11 +556,29 @@ const offsetY = Math.floor((canvas.height - mapHeight) / 2);
 const startingX = offsetX + Boundary.width + Boundary.width / 2;
 const startingY = offsetY + Boundary.width + Boundary.width / 2
 
+function updateScoreboard(score) {
+  const scoreboardElement = document.getElementById('scoreboard');
+  scoreboardElement.textContent = 'Score: ' + score + ' - High Score: ' + 34;
 
-console.log("my values");
-console.log(startingX);
-console.log(startingY);
-console.log("............");
+  // Get the size of the maze (canvas) and the scoreboard element
+  const mazeWidth = canvas.width;
+  const scoreboardWidth = scoreboardElement.clientWidth;
+  const scoreboardHeight = scoreboardElement.clientHeight;
+
+  // Set the padding from the top and right edges of the maze
+  const paddingFromTop = 20;
+  const paddingFromRight = 1000;
+
+  // Calculate the top and right positions for the scoreboard
+  const scoreboardTop = paddingFromTop;
+  const scoreboardRight = mazeWidth - paddingFromRight - scoreboardWidth;
+
+  // Position the scoreboard element
+  scoreboardElement.style.position = 'fixed';
+  scoreboardElement.style.top = startingY - 120 + 'px';
+  // scoreboardElement.style.right = scoreboardRight + 'px';
+  scoreboardElement.style.left = startingX + 200 + 'px';
+}
 
 const cat = new Cat({
 	position: {
@@ -519,6 +672,7 @@ function animate() {
 	updateScoreboard(player.position.y);
 	if(get_discrete_Y(player.position.y) < 0) {
 		alert("we have reached our final densitation")
+		// console.log(player.position);
 	}
 	// if((get_discrete_Y(player.position.y) === get_discrete_Y(cat.position.y)) && 
 	// 	(get_discrete_X(player.position.x) === get_discrete_X(cat.position.x))) {
@@ -627,7 +781,6 @@ function animate() {
 			circle: player,
 			rectangle: boundary
 		})) {
-			console.log('we are colliding')
 			player.velocity.x = 0
 			player.velocity.y = 0
 		}
@@ -671,13 +824,14 @@ function animate() {
 
 		let new_row = cat.position.y + direction_row * cat_speed;
 		let new_col = cat.position.x + direction_col * cat_speed;
+
+
 		if (
     (new_row < get_continuous_X(rows[path_iteration]) && direction_row > 0) ||
     (new_row > get_continuous_X(rows[path_iteration]) && direction_row < 0) ||
     (new_col < get_continuous_Y(col[path_iteration]) && direction_col > 0) ||
     (new_col > get_continuous_Y(col[path_iteration]) && direction_col < 0)
 		) {
-			console.log("FIRST IF");
 		  movement_in_progress = true;
 			let go_to_row = get_continuous_X(rows[path_iteration]);
 			let go_to_col = get_continuous_Y(col[path_iteration]);
@@ -708,7 +862,6 @@ function animate() {
     (new_col <= get_continuous_Y(col[path_iteration]) && direction_col < 0)
 		)
 		{
-			console.log("SECOND IF");
 			let go_to_row = get_continuous_X(rows[path_iteration]);
 			let go_to_col = get_continuous_Y(col[path_iteration]);
 			let row_vector = go_to_row - cat.position.y;
@@ -720,56 +873,30 @@ function animate() {
 				cat.position.x = go_to_col;
 			}
 			movement_in_progress = false;
-			console.log("SET TO FALSE");
 			path_iteration++;
 		}
-		else {
-			console.log("WE HIT THE ELSE");
-			console.log(cat.position);
-			console.log(rows)
-			console.log(col);
-		}
-		// cat.position.x += ((col[path_iteration] - cat.position.x)) * 3;
-		// cat.position.y += ((rows[path_iteration] - cat.position.y)) * 3;
 		
 	}
 
 	
 
-	if(animate_iteration % 10 === 0) {
+	if(animate_iteration % 300 === 0) {
 		go_flag = true;
 		// console.log(movement_in_progress);
 	}
 
 	if(animate_iteration === 1 || (go_flag && !movement_in_progress)) {
 		//update CAT
-		console.log("ENTERED");
-		console.log(movement_in_progress);
-		console.log("^^^^");
+
 		my_matrix = read_write_values(map)
-		// console.log(my_matrix)
-		// console.log(get_discrete_Y(cat.position.y))
-		// console.log(get_discrete_X(cat.position.x))
-		// console.log(cat.position)
-		// console.log(player.position)
-		// console.log(cat.position);
-		// console.log(player.position);
-		// console.log(get_discrete_Y(player.position.y))
-		// console.log(get_discrete_X(player.position.x))
-		// console.log(rows)
-		// console.log(col)
+
 		fastestTimes(my_matrix, get_discrete_Y(cat.position.y), get_discrete_X(cat.position.x), get_discrete_Y(player.position.y), get_discrete_X(player.position.x), rows, col)
+		
 		path_iteration = 0;
 		inner_path_iteration = 0;
-		console.log(rows)
-		console.log(col)
 
 		go_flag = false;		//reset go_flag so we have to wait until the next iteration to update shortest path
 	}
-	// if(animate_iteration === 0) {
-	// 	cat.update()
-	// }
-	
 
 }
 
