@@ -605,7 +605,7 @@ function fastestTimes(values, cat_r, cat_c, mouse_r, mouse_c, row_path, col_path
   while(!pq.isEmpty()) {
     relax_node(pq.extractMin());
   }
-  console.log(matrix);
+  // console.log(matrix);
   grab_path(matrix, cat_r, cat_c, mouse_r, mouse_c, row_path, col_path);
 
 }
@@ -781,12 +781,17 @@ function animate() {
 
   checkCollisionAndRestart();
   updateScoreboard(false);
-	
-	if(get_discrete_Y(player.position.y) < 0) {
-    //moving on to the next level
+	// console.log(player.position.y);
+	// if(get_discrete_Y(player.position.y) < 0) {
+ //    //moving on to the next level
+
+ //    updateScoreboard(true);
+	// 	window.location.reload();
+	// }
+  if(player.position.y < startingY) {
     updateScoreboard(true);
-		window.location.reload();
-	}
+    window.location.reload();
+  }
   
 	
 
