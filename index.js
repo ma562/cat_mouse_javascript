@@ -793,14 +793,13 @@ function animate() {
   console.log("player currently at ");
   console.log(player.position.y);
   console.log("--------------");
-  if(player.position.y < startingY) {
 
+  if(player.position.y < startingY) {
     updateScoreboard(true);
     window.location.reload();
+    return;
   }
   
-	
-
 	requestAnimationFrame(animate)
 	c.clearRect(0, 0, canvas.width, canvas.height)
 
