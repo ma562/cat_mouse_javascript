@@ -788,7 +788,13 @@ function animate() {
  //    updateScoreboard(true);
 	// 	window.location.reload();
 	// }
+  console.log("starting was ");
+  console.log(startingY);
+  console.log("player currently at ");
+  console.log(player.position.y);
+  console.log("--------------");
   if(player.position.y < startingY) {
+
     updateScoreboard(true);
     window.location.reload();
   }
