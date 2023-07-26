@@ -902,7 +902,25 @@ function animate() {
 	})
 	player.update()
 
-  if(rows.length !== 0 && rows.length < 8) {
+  function sameRowCol(arr) {
+  if (arr.length <= 1) {
+    // If the array has only one element or is empty, return false
+    return false;
+  }
+
+  const lastValue = arr[arr.length - 1];
+  for (let i = 0; i < arr.length - 1; i++) {
+    if (arr[i] !== arr[0]) {
+      // If any element is different from the first value, return false
+      return false;
+    }
+  }
+
+  // If all elements are the same (except for the last one), return true
+  return true;
+}
+
+  if(sameRowCol(rows) || sameRowCol(col)) {
     player.mouse_is_scared();
   }
   else {
