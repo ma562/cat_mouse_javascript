@@ -926,9 +926,9 @@ function animate() {
 	let movement_in_progress = false;
 	if((rows.length !== 0) && (col.length !== 0) && (rows[path_iteration] !== -1) && (col[path_iteration] !== -1)) {
 		
-		cat_speed = 1.5;
+		cat_speed = 3;
     if(sameRowCol(rows) || sameRowCol(col)) {
-      cat_speed = 3;
+      cat_speed = 4;
     }
 		
 		//check that we have not met our goal yet
