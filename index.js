@@ -135,10 +135,9 @@ function getMapAndMarkUsed(mapKey) {
 let map;
 // Usage:
 const randomMapKey = getRandomUnusedMapKey();
-console.log(randomMapKey);
+
 if (randomMapKey) {
   map = getMapAndMarkUsed(randomMapKey);
-  console.log(map);
 } else {
   // Handle the case where all maps have been used once and start reusing maps
   const reusedMapKey = getRandomUnusedMapKey();
@@ -781,18 +780,6 @@ function animate() {
 
   checkCollisionAndRestart();
   updateScoreboard(false);
-	// console.log(player.position.y);
-	// if(get_discrete_Y(player.position.y) < 0) {
- //    //moving on to the next level
-
- //    updateScoreboard(true);
-	// 	window.location.reload();
-	// }
-  console.log("starting was ");
-  console.log(startingY);
-  console.log("player currently at ");
-  console.log(player.position.y);
-  console.log("--------------");
 
   if(player.position.y < startingY) {
     updateScoreboard(true);
@@ -806,6 +793,7 @@ function animate() {
 	animate_iteration++;
 
 	if (keys.w.pressed && lastKey === 'w') {
+    console.log("W PRESSED");
 		for (let i = 0; i < boundaries.length; i++) {
 		const boundary = boundaries[i]
 		if (circleCollidesWithRectangle({
@@ -938,7 +926,10 @@ function animate() {
 	let movement_in_progress = false;
 	if((rows.length !== 0) && (col.length !== 0) && (rows[path_iteration] !== -1) && (col[path_iteration] !== -1)) {
 		
-		cat_speed = 2;
+		cat_speed = 1.5;
+    if(sameRowCol(rows) || sameRowCol(col)) {
+      cat_speed = 3;
+    }
 		
 		//check that we have not met our goal yet
 		//cat.position.x is for columns
@@ -1093,9 +1084,7 @@ function animate() {
     
   }
 
-	
-
-	if(animate_iteration % 100 === 0) {
+	if(animate_iteration % 10 === 0) {
 		go_flag = true;
 		// console.log(movement_in_progress);
 	}
