@@ -926,7 +926,7 @@ function animate() {
 	let movement_in_progress = false;
 	if((rows.length !== 0) && (col.length !== 0) && (rows[path_iteration] !== -1) && (col[path_iteration] !== -1)) {
 		
-		cat_speed = 3;
+		cat_speed = 2.5;
     if(sameRowCol(rows) || sameRowCol(col)) {
       cat_speed = 4;
     }
