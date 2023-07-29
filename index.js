@@ -1,7 +1,7 @@
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
 const VELOCITY = 2;
-const numCats = 1;
+const numCats = 2;
 // let go_flag = false;		//go flag ensures the cat moves to the nearest discrete position before updating the shortest path algo
 let go_flag2 = false;
 let gameOver = false;		//checks if the game is over
@@ -71,8 +71,8 @@ const mapCollection = {
   map4: [
   	// Map 4 double horizontal zig zag
     ['-', '-', ' ', ' ', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-'],
-			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
-			 ['-', ' ', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ','-', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', '-', '-', '-','-', ' ', '-', '-', '-', '-', '-', ' ', '-'],
 			 ['-', ' ', '-', ' ', '-', ' ',' ', ' ', '-', ' ', ' ', ' ', '-', ' ', '-'],
 			 ['-', ' ', ' ', ' ', '-', ' ','-', ' ', '-', ' ', '-', ' ', ' ', ' ', '-'],
 			 ['-', ' ', ' ', ' ', '-', ' ','-', ' ', '-', ' ', '-', ' ', ' ', ' ', '-'],
@@ -82,8 +82,8 @@ const mapCollection = {
 			 ['-', ' ', ' ', ' ', '-', ' ','-', ' ', '-', ' ', '-', ' ', ' ', ' ', '-'],
 			 ['-', ' ', ' ', ' ', '-', ' ','-', ' ', '-', ' ', '-', ' ', ' ', ' ', '-'],
 			 ['-', ' ', '-', ' ', '-', ' ',' ', ' ', '-', ' ', ' ', ' ', '-', ' ', '-'],
-			 ['-', ' ', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', ' ', '-'],
-			 ['-', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
+			 ['-', ' ', '-', '-', '-', '-','-', ' ', '-', '-', '-', '-', '-', ' ', '-'],
+			 ['-', ' ', ' ', ' ', ' ', ' ','-', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '-'],
 			 ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
   ],
   map5: [
@@ -349,10 +349,14 @@ class Cat {
 	constructor({ position, velocity }) {
 		this.position = position
 		this.velocity = velocity
-		// this.radius = 15
 		this.image = new Image();
-    	this.image.src = 'birdie.png';
-    	this.radius = 18; // Adjust the radius of the player image
+    this.image.src = 'birdie.png';
+    this.radius = 18; // Adjust the radius of the player image
+    this.go_flag = false;
+    this.movement_in_progress = false;
+    this.path_iterations = 0;
+    this.rows = [];
+    this.col = [];
 	}
 
 
@@ -690,11 +694,6 @@ for(let i = 0; i < numCats; i++) {
 })
 
   myCats.push(cat);
-  go_flags.push(false);
-  movements_in_progress.push(false);
-  path_iterations.push[0];
-  rows.push([]);
-  col.push([]);
 }
 
 const player = new Player({
@@ -736,14 +735,6 @@ function circleCollidesWithRectangle({
 }
 
 let animate_iteration = 0;
-// let path_iterations = [];
-// let path_iteration2 = 0;
-// let inner_path_iteration = 0;
-let x_direction = 0;
-let y_direction = 0;
-
-// let rows2 = []
-// let col2 = []
 
 function get_discrete_X(position_x) {
 	return parseInt((position_x - startingX + 1) / (Boundary.width));		// + 1 is to fix a rounding error
@@ -785,15 +776,6 @@ function checkCollisionAndRestart() {
 }
 
 function animate() {
-  // console.log(startingY);
-  // console.log(player.position.y);
-  // console.log("player Y coord")
-  // console.log(get_discrete_Y(player.position.y + 5));
-  // console.log("player X coord");
-  // console.log(get_discrete_X(player.position.x + 5))
-  // console.log("-------------------")
-
-
   // console.log(localStorage.getItem('currentScore'));
   checkCollisionAndRestart();
   updateScoreboard(false);
@@ -930,7 +912,7 @@ function animate() {
 }
 
   for(let i = 0; i < myCats.length; i++) {
-    if(sameRowCol(rows[i]) || sameRowCol(col[i])) {
+    if(sameRowCol(myCats[i].rows) || sameRowCol(myCats[i].col)) {
       player.mouse_is_scared();
       myCats[i].updateAngryCat();
     }
@@ -941,24 +923,19 @@ function animate() {
     myCats[i].draw();
   }
 
-  // cat2.draw();
-
-
-	// let movement_in_progress = false;
 	
 
 
   for(let i = 0; i < myCats.length; i++) {
-
-    if((rows[i].length !== 0) && (col[i].length !== 0) && (rows[path_iterations[i]] !== -1) && (col[path_iterations[i]] !== -1)) {
+    if((myCats[i].rows.length !== 0) && (myCats[i].col.length !== 0) && (myCats[i].rows[myCats[i].path_iterations] !== -1) && (myCats[i].col[myCats[i].path_iterations] !== -1)) {
     
-    cat_speed = 1;
-    if(sameRowCol(rows[i]) || sameRowCol(col[i])) {
-      cat_speed = 2;
+    cat_speed = i + 1;
+    if(sameRowCol(myCats[i].rows) || sameRowCol(myCats[i].col)) {
+      cat_speed = 2 * (i + 1.5);
     }
     
-    let direction_row = get_continuous_X(rows[i][path_iterations[i]]) - myCats[i].position.y;
-    let direction_col = get_continuous_Y(col[i][path_iterations[i]]) - myCats[i].position.x;
+    let direction_row = get_continuous_X(myCats[i].rows[myCats[i].path_iterations]) - myCats[i].position.y;
+    let direction_col = get_continuous_Y(myCats[i].col[myCats[i].path_iterations]) - myCats[i].position.x;
 
     if (direction_row) {
         direction_row = direction_row > 0 ? 1 : -1;
@@ -977,14 +954,14 @@ function animate() {
 
 
     if (
-    (new_row < get_continuous_X(rows[i][path_iterations[i]]) && direction_row > 0) ||
-    (new_row > get_continuous_X(rows[i][path_iterations[i]]) && direction_row < 0) ||
-    (new_col < get_continuous_Y(col[i][path_iterations[i]]) && direction_col > 0) ||
-    (new_col > get_continuous_Y(col[i][path_iterations[i]]) && direction_col < 0)
+    (new_row < get_continuous_X(myCats[i].rows[myCats[i].path_iterations]) && direction_row > 0) ||
+    (new_row > get_continuous_X(myCats[i].rows[myCats[i].path_iterations]) && direction_row < 0) ||
+    (new_col < get_continuous_Y(myCats[i].col[myCats[i].path_iterations]) && direction_col > 0) ||
+    (new_col > get_continuous_Y(myCats[i].col[myCats[i].path_iterations]) && direction_col < 0)
     ) {
-      movement_in_progress = true;
-      let go_to_row = get_continuous_X(rows[i][path_iterations[i]]);
-      let go_to_col = get_continuous_Y(col[i][path_iterations[i]]);
+      myCats[i].movement_in_progress = true;
+      let go_to_row = get_continuous_X(myCats[i].rows[myCats[i].path_iterations]);
+      let go_to_col = get_continuous_Y(myCats[i].col[myCats[i].path_iterations]);
       let row_vector = go_to_row - myCats[i].position.y;
       let col_vector = go_to_col - myCats[i].position.x;
 
@@ -1006,14 +983,14 @@ function animate() {
       }
     }
     else if(
-    (new_row >= get_continuous_X(rows[i][path_iterations[i]]) && direction_row > 0) ||
-    (new_row <= get_continuous_X(rows[i][path_iterations[i]]) && direction_row < 0) ||
-    (new_col >= get_continuous_Y(col[i][path_iterations[i]]) && direction_col > 0) ||
-    (new_col <= get_continuous_Y(col[i][path_iterations[i]]) && direction_col < 0)
+    (new_row >= get_continuous_X(myCats[i].rows[myCats[i].path_iterations]) && direction_row > 0) ||
+    (new_row <= get_continuous_X(myCats[i].rows[myCats[i].path_iterations]) && direction_row < 0) ||
+    (new_col >= get_continuous_Y(myCats[i].col[myCats[i].path_iterations]) && direction_col > 0) ||
+    (new_col <= get_continuous_Y(myCats[i].col[myCats[i].path_iterations]) && direction_col < 0)
     )
     {
-      let go_to_row = get_continuous_X(rows[i][path_iterations[i]]);
-      let go_to_col = get_continuous_Y(col[i][path_iterations[i]]);
+      let go_to_row = get_continuous_X(myCats[i].rows[myCats[i].path_iterations]);
+      let go_to_col = get_continuous_Y(myCats[i].col[myCats[i].path_iterations]);
       let row_vector = go_to_row - myCats[i].position.y;
       let col_vector = go_to_col - myCats[i].position.x;
       if(row_vector) {
@@ -1022,8 +999,8 @@ function animate() {
       else if(col_vector) {
         myCats[i].position.x = go_to_col;
       }
-      movements_in_progress[i] = false;
-      path_iterations[i]++;
+      myCats[i].movement_in_progress = false;
+      myCats[i].path_iterations++;
     }
     
   }
@@ -1033,126 +1010,22 @@ function animate() {
 
 
     if(animate_iteration % 10) {
-      go_flags[i] = true;
+      myCats[i].go_flag = true;
     }
 
-    if(animate_iteration === 1 || (go_flags[i] && !movements_in_progress[i])) {
+    if(animate_iteration === 1 || (myCats[i].go_flag && !myCats[i].movement_in_progress)) {
     //update CAT
 
     my_matrix = read_write_values(map)
 
-    fastestTimes(my_matrix, get_discrete_Y(myCats[i].position.y), get_discrete_X(myCats[i].position.x), get_discrete_Y(player.position.y + 5), get_discrete_X(player.position.x + 5), rows[i], col[i])
+    fastestTimes(my_matrix, get_discrete_Y(myCats[i].position.y), get_discrete_X(myCats[i].position.x), get_discrete_Y(player.position.y + 5), get_discrete_X(player.position.x + 5), myCats[i].rows, myCats[i].col)
     
-    path_iterations[i] = 0;
+    myCats[i].path_iterations = 0;
     // inner_path_iteration = 0;
 
-    go_flag = false;    //reset go_flag so we have to wait until the next iteration to update shortest path
+    myCats[i].go_flags = false;    //reset go_flag so we have to wait until the next iteration to update shortest path
   }
   }
-
-
-    // let movement_in_progress2 = false;
-  // if((rows2.length !== 0) && (col2.length !== 0) && (rows2[path_iteration2] !== -1) && (col2[path_iteration2] !== -1)) {
-    
-  //   cat_speed = 3;
-    
-  //   //check that we have not met our goal yet
-  //   //cat.position.x is for columns
-  //   //cat.position.y is for rows
-  //   let direction_row = get_continuous_X(rows2[path_iteration2]) - cat2.position.y;
-  //   let direction_col = get_continuous_Y(col2[path_iteration2]) - cat2.position.x;
-
-  //   if (direction_row) {
-  //       direction_row = direction_row > 0 ? 1 : -1;
-  //   } else {
-  //       direction_row = 0;
-  //   }
-
-  //   if (direction_col) {
-  //       direction_col = direction_col > 0 ? 1 : -1;
-  //   } else {
-  //       direction_col = 0;
-  //   }
-
-  //   let new_row = cat2.position.y + direction_row * cat_speed;
-  //   let new_col = cat2.position.x + direction_col * cat_speed;
-
-
-  //   if (
-  //   (new_row < get_continuous_X(rows2[path_iteration2]) && direction_row > 0) ||
-  //   (new_row > get_continuous_X(rows2[path_iteration2]) && direction_row < 0) ||
-  //   (new_col < get_continuous_Y(col2[path_iteration2]) && direction_col > 0) ||
-  //   (new_col > get_continuous_Y(col2[path_iteration2]) && direction_col < 0)
-  //   ) {
-  //     movement_in_progress2 = true;
-  //     let go_to_row = get_continuous_X(rows2[path_iteration2]);
-  //     let go_to_col = get_continuous_Y(col2[path_iteration2]);
-  //     let row_vector = go_to_row - cat2.position.y;
-  //     let col_vector = go_to_col - cat2.position.x;
-
-  //     if(row_vector) {
-  //       if(row_vector > 0) {
-  //         cat2.position.y += cat_speed;
-  //       }
-  //       else {
-  //         cat2.position.y -= cat_speed;
-  //       }
-  //     }
-  //     else if(col_vector) {
-  //       if(col_vector > 0) {
-  //         cat2.position.x += cat_speed;
-  //       }
-  //       else {
-  //         cat2.position.x -= cat_speed;
-  //       }
-  //     }
-  //   }
-  //   else if(
-  //   (new_row >= get_continuous_X(rows2[path_iteration2]) && direction_row > 0) ||
-  //   (new_row <= get_continuous_X(rows2[path_iteration2]) && direction_row < 0) ||
-  //   (new_col >= get_continuous_Y(col2[path_iteration2]) && direction_col > 0) ||
-  //   (new_col <= get_continuous_Y(col2[path_iteration2]) && direction_col < 0)
-  //   )
-  //   {
-  //     let go_to_row = get_continuous_X(rows2[path_iteration2]);
-  //     let go_to_col = get_continuous_Y(col2[path_iteration2]);
-  //     let row_vector = go_to_row - cat2.position.y;
-  //     let col_vector = go_to_col - cat2.position.x;
-  //     if(row_vector) {
-  //       cat2.position.y = go_to_row;
-  //     }
-  //     else if(col_vector) {
-  //       cat2.position.x = go_to_col;
-  //     }
-  //     movement_in_progress2 = false;
-  //     path_iteration2++;
-  //   }
-    
-  // }
-
-  // if(animate_iteration % 10 === 0) {
-  //  go_flag = true;
-  //  // console.log(movement_in_progress);
-  // }
-
- //  if(animate_iteration % 100 === 0) {
- //    go_flag2 = true;
- //  }
-
-	
-
-  // if(animate_iteration === 1 || (go_flag2 && !movement_in_progress2)) {
-  //   //update CAT
-
-  //   my_matrix2 = read_write_values(map)
-
-  //   fastestTimes(my_matrix2, get_discrete_Y(cat2.position.y), get_discrete_X(cat2.position.x), get_discrete_Y(player.position.y + 5), get_discrete_X(player.position.x + 5), rows2, col2)
-    
-  //   path_iteration2 = 0;
-  //   // inner_path_iteration = 0;
-
-  //   go_flag2 = false;    //reset go_flag so we have to wait until the next iteration to update shortest path
-  // }
 
 }
 
