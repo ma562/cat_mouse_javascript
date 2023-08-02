@@ -1,17 +1,15 @@
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
 const VELOCITY = 2;
-const numCats = 2;
-// let go_flag = false;		//go flag ensures the cat moves to the nearest discrete position before updating the shortest path algo
-let go_flag2 = false;
+const numCats = 1;
 let gameOver = false;		//checks if the game is over
 let myCats = [];      //an array of cats
-let go_flags = [];    //go flag ensures the cat moves to the nearest discrete position before updating the shortest path algo
-let movements_in_progress = []
-let path_iterations = []
-let rows = []
-let col = []
-
+let update_iteration = 0;
+// let update_every = 500; 
+//level 0 - sleep speed, level 1 - walk speed, level 2 jog speed, level 3 run speed
+let my_speeds = [[0.5, 0.75, 1, 1.25, 1.5], [2, 2.25, 2.5], [3, 3.25, 3.5], [4, 4.25, 4.5]]  
+let update_every = [750, 1150, 2000, 3000];
+//first 5 levels consist of 1 cat
 
 const mapCollection = {
   map1: [
@@ -105,6 +103,22 @@ const mapCollection = {
        ['-', '-', '-', '-', '-', '-','-', '-', '-', '-', '-', '-', '-', '-', '-']
   ],
 };
+
+function get_discrete_X(position_x) {
+  return parseInt((position_x - startingX + 1) / (Boundary.width));   // + 1 is to fix a rounding error
+}
+
+function get_discrete_Y(position_y) {
+  return parseInt((position_y - startingY + 1) / (Boundary.height));  // + 1 is to fix a rounding error
+}
+
+function get_continuous_X(position_x) {
+  return position_x * Boundary.width + startingY;
+}
+
+function get_continuous_Y(position_y) {
+  return position_y * Boundary.height + startingX;
+}
 
 // Function to get a random map key that hasn't been used yet
 function getRandomUnusedMapKey() {
@@ -298,9 +312,11 @@ class Player {
 		this.position = position
 		this.velocity = velocity
 		this.image = new Image();
-    	this.image.src = 'mouse3.png';
+    this.image.src = 'mouse.png';
       //this used to be 18 so used the adjustment factor of 18 - this.radius when calculating fastest times
-    	this.radius = 13; // Adjust the radius of the player image
+    this.radius = 13; // Adjust the radius of the player image
+    this.my_velocity = VELOCITY;
+    this.speed_level = 0;
 	}
 
 
@@ -328,7 +344,7 @@ class Player {
   }
 
   mouse_is_not_scared() {
-    this.image.src = 'mouse3.png';
+    this.image.src = 'mouse.png';
   }
 
 	update() {
@@ -340,9 +356,105 @@ class Player {
 		else {
 			this.position.y += this.velocity.y
 		}
-		
 	}
 
+  updateMouseImage() {
+    if(this.speed_level === 0) {
+      this.image.src = "mouse.png";
+    }
+    else if(this.speed_level === 1) {
+      this.image.src = "lightning_mouse.png";
+    }
+    else if(this.speed_level === 2) {
+      this.image.src = "mask_mouse.png";
+    }
+    else if(this.speed_level === 3) {
+      this.image.src = "whisker_mouse.png";
+    }
+    else {
+      this.image.src = "super_mouse.png";
+    }
+  }
+
+  updateScaredMouse() {
+    if(this.speed_level === 0) {
+      this.image.src = "scared_mouse.png";
+    }
+    else if(this.speed_level === 1) {
+      this.image.src = "scared_lightning_mouse.png";
+    }
+    else if(this.speed_level === 2) {
+      this.image.src = "scared_mask_mouse.png";
+    }
+    else if(this.speed_level === 3) {
+      this.image.src = "scared_whisker_mouse.png";
+    }
+    else {
+      this.image.src = "scared_super_mouse.png";
+    }
+  }
+}
+
+class Cheese {
+  constructor({position}) {
+    this.image = new Image();
+    this.position = position;
+    this.taken = false;
+    this.image.src = 'cheese.png';
+    this.radius = 18;
+  }
+  draw() {
+    c.beginPath();
+    c.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+    c.fillStyle = 'transparent';
+    c.fill();
+    c.closePath();
+
+    // const imageRadius = this.radius * Math.sqrt(2);
+    const imageRadius = this.radius;
+    c.drawImage(
+      this.image,
+      this.position.x - imageRadius,
+      this.position.y - imageRadius,
+      imageRadius * 2,
+      imageRadius * 2
+    );
+  }
+
+  update_position(x, y) {
+    this.position.x = x;
+    this.position.y = y;
+  }
+}
+
+function findSpotForCheese(map) {
+    const subMap = [];
+
+    for (let row = 1; row < map.length - 1; row++) {
+        const subRow = [];
+        for (let col = 1; col < map[row].length - 1; col++) {
+            subRow.push(map[row][col]);
+        }
+        subMap.push(subRow);
+    }
+
+    const emptyCoordinates = [];
+
+    for (let row = 0; row < subMap.length; row++) {
+        for (let col = 0; col < subMap[row].length; col++) {
+            if (subMap[row][col] === ' ') {
+                emptyCoordinates.push({ row, col });
+            }
+        }
+    }
+
+    if (emptyCoordinates.length === 0) {
+        return null; // No empty space available
+    }
+
+    const randomIndex = Math.floor(Math.random() * emptyCoordinates.length);
+
+    return emptyCoordinates[randomIndex];
 }
 
 class Cat {
@@ -350,9 +462,11 @@ class Cat {
 		this.position = position
 		this.velocity = velocity
 		this.image = new Image();
-    this.image.src = 'birdie.png';
+    this.image.src = 'my_cat.png';
     this.radius = 18; // Adjust the radius of the player image
     this.go_flag = false;
+    this.speed = 0;
+    this.speed_level = -1;
     this.movement_in_progress = false;
     this.path_iterations = 0;
     this.rows = [];
@@ -384,15 +498,54 @@ class Cat {
   }
 
   updateNormalCat() {
-    this.image.src = "birdie.png";
+    this.image.src = "my_cat.png";
+  }
+
+  updateCatImage() {
+    // console.log(this.speed_level);
+    if(this.speed_level === 0) {
+      this.image.src = "my_cat.png";
+      // console.log("birdie");
+    }
+    else if(this.speed_level === 1) {
+      this.image.src = "purdue_cat.png";
+      // console.log("purdue cat");
+    }
+    else if(this.speed_level === 2) {
+      this.image.src = "skate_board_cat.png";
+    }
+    else if(this.speed_level === 3) {
+      this.image.src = "rage_cat.png";
+    }
+  }
+
+  updateRageCat() {
+    if(this.speed_level === 0) {
+      this.image.src = "angry_cat.png";
+      // console.log("birdie");
+    }
+    else if(this.speed_level === 1) {
+      this.image.src = "angry_purdue_cat.png";
+      // console.log("purdue cat");
+    }
+    else if(this.speed_level === 2) {
+      this.image.src = "angry_skate_board_cat.png";
+    }
+    else if(this.speed_level === 3) {
+      this.image.src = "angry_rage_cat.png";
+    }
+  }
+
+  increaseSpeed() {
+    if(this.speed_level !== 3) {
+      this.speed_level++;
+    }
   }
 
 	update() {
 		this.draw()
 		this.position.x += this.velocity.x 
 		this.position.y += this.velocity.y
-
-		
 	}
 }
 
@@ -736,22 +889,6 @@ function circleCollidesWithRectangle({
 
 let animate_iteration = 0;
 
-function get_discrete_X(position_x) {
-	return parseInt((position_x - startingX + 1) / (Boundary.width));		// + 1 is to fix a rounding error
-}
-
-function get_discrete_Y(position_y) {
-	return parseInt((position_y - startingY + 1) / (Boundary.height));	// + 1 is to fix a rounding error
-}
-
-function get_continuous_X(position_x) {
-	return position_x * Boundary.width + startingY;
-}
-
-function get_continuous_Y(position_y) {
-	return position_y * Boundary.height + startingX;
-}
-
 function calculateDistance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
@@ -767,13 +904,33 @@ function checkCollision(playerX, playerY, catX, catY) {
 }
 
 function checkCollisionAndRestart() {
-  if (!gameOver && checkCollision(player.position.x, player.position.y, myCats[0].position.x, myCats[0].position.y)) {
-    gameOver = true;
-    localStorage.setItem('currentScore', 0);
-    alert("Game Over");
-    window.location.reload();
+  for(let i = 0; i < myCats.length; i++) {
+    if (!gameOver && checkCollision(player.position.x, player.position.y, myCats[i].position.x, myCats[i].position.y)) {
+      gameOver = true;
+      localStorage.setItem('currentScore', 0);
+      alert("Game Over");
+      window.location.reload();
+    }
   }
 }
+
+function getRandomSpeed(arr) {
+    // Generate a random index within the range of the array's length
+    const randomIndex = Math.floor(Math.random() * arr.length);
+
+    // Access and return the element at the random index
+    return arr[randomIndex];
+  }
+
+
+  let coords = findSpotForCheese(map);
+  const cheese = new Cheese({
+    position: {
+      x: get_continuous_Y(coords.col),
+      y: get_continuous_X(coords.row)
+    }
+  })
+
 
 function animate() {
   // console.log(localStorage.getItem('currentScore'));
@@ -799,7 +956,7 @@ function animate() {
 				...player, 
 				velocity: {
 					x: 0,
-					y: -VELOCITY
+					y: -player.my_velocity
 				}
 			},
 			rectangle: boundary
@@ -809,7 +966,7 @@ function animate() {
 			break
 		} else {
 			player.velocity.x = 0
-			player.velocity.y = -VELOCITY
+			player.velocity.y = -player.my_velocity;
 		}
 		}
 	}
@@ -820,7 +977,7 @@ function animate() {
 			circle: {
 				...player, 
 				velocity: {
-					x: -VELOCITY,
+					x: -player.my_velocity,
 					y: 0
 				}
 			},
@@ -830,7 +987,7 @@ function animate() {
 			player.velocity.x = 0
 			break
 		} else {
-			player.velocity.x = -VELOCITY
+			player.velocity.x = -player.my_velocity;
 			player.velocity.y = 0
 		}
 		}
@@ -843,7 +1000,7 @@ function animate() {
 				...player, 
 				velocity: {
 					x: 0,
-					y: VELOCITY
+					y: player.my_velocity
 				}
 			},
 			rectangle: boundary
@@ -853,7 +1010,7 @@ function animate() {
 			break
 		} else {
 			player.velocity.x = 0
-			player.velocity.y = VELOCITY
+			player.velocity.y = player.my_velocity;
 		}
 		}
 	}
@@ -864,7 +1021,7 @@ function animate() {
 			circle: {
 				...player, 
 				velocity: {
-					x: VELOCITY,
+					x: player.my_velocity,
 					y: 0
 				}
 			},
@@ -874,7 +1031,7 @@ function animate() {
 			player.velocity.x = 0
 			break
 		} else {
-			player.velocity.x = VELOCITY
+			player.velocity.x = player.my_velocity;
 			player.velocity.y = 0
 		}
 		}
@@ -891,13 +1048,25 @@ function animate() {
 		}
 
 	})
-	player.update()
+	player.update();
+  if(!cheese.taken && checkCollision(player.position.x, player.position.y, cheese.position.x, cheese.position.y)) {
+    player.my_velocity += 1;
+    player.speed_level += 1;
+    cheese.taken = true;
+  }
+
+  if(!cheese.taken) {
+    cheese.draw();
+  }
+  
+  
 
   function sameRowCol(arr) {
   if (arr.length <= 1) {
     // If the array has only one element or is empty, return false
     return false;
   }
+
 
   const lastValue = arr[arr.length - 1];
   for (let i = 0; i < arr.length - 1; i++) {
@@ -913,13 +1082,16 @@ function animate() {
 
   for(let i = 0; i < myCats.length; i++) {
     if(sameRowCol(myCats[i].rows) || sameRowCol(myCats[i].col)) {
-      player.mouse_is_scared();
-      myCats[i].updateAngryCat();
+      // player.mouse_is_scared();
+      player.updateScaredMouse();
+      myCats[i].updateRageCat();
     }
     else {
-      player.mouse_is_not_scared();
-      myCats[i].updateNormalCat();
+      // player.mouse_is_not_scared();
+      player.updateMouseImage();
+      myCats[i].updateCatImage();
     }
+
     myCats[i].draw();
   }
 
@@ -928,11 +1100,26 @@ function animate() {
 
   for(let i = 0; i < myCats.length; i++) {
     if((myCats[i].rows.length !== 0) && (myCats[i].col.length !== 0) && (myCats[i].rows[myCats[i].path_iterations] !== -1) && (myCats[i].col[myCats[i].path_iterations] !== -1)) {
-    
-    cat_speed = i + 1;
-    if(sameRowCol(myCats[i].rows) || sameRowCol(myCats[i].col)) {
-      cat_speed = 2 * (i + 1.5);
+    update_iteration++;
+
+    if((update_iteration === 1) || ((update_iteration % update_every[myCats[i].speed_level]) === 0)) {
+      
+      if(myCats[i].speed_level !== 3 && cheese.taken) {
+        let my_coord = findSpotForCheese(map)
+        cheese.update_position(get_continuous_Y(my_coord.col), get_continuous_X(my_coord.row));
+        cheese.taken = false;
+      }
+
+      myCats[i].increaseSpeed();
+      myCats[i].speed = getRandomSpeed(my_speeds[myCats[i].speed_level]);
     }
+
+    cat_speed = myCats[i].speed;
+    if(sameRowCol(myCats[i].rows) || sameRowCol(myCats[i].col)) {
+
+      cat_speed = cat_speed + 1;
+    }
+    
     
     let direction_row = get_continuous_X(myCats[i].rows[myCats[i].path_iterations]) - myCats[i].position.y;
     let direction_col = get_continuous_Y(myCats[i].col[myCats[i].path_iterations]) - myCats[i].position.x;
@@ -1005,11 +1192,7 @@ function animate() {
     
   }
 
-
-
-
-
-    if(animate_iteration % 10) {
+    if(animate_iteration % 10 === 0) {
       myCats[i].go_flag = true;
     }
 
@@ -1021,7 +1204,6 @@ function animate() {
     fastestTimes(my_matrix, get_discrete_Y(myCats[i].position.y), get_discrete_X(myCats[i].position.x), get_discrete_Y(player.position.y + 5), get_discrete_X(player.position.x + 5), myCats[i].rows, myCats[i].col)
     
     myCats[i].path_iterations = 0;
-    // inner_path_iteration = 0;
 
     myCats[i].go_flags = false;    //reset go_flag so we have to wait until the next iteration to update shortest path
   }
