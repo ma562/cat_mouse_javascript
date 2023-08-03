@@ -1303,28 +1303,17 @@ window.addEventListener('keyup', ({key}) => {
 	}
 })
 
+// Add an event listener for the 'deviceorientation' event
+window.addEventListener('deviceorientation', handleOrientation);
+alert("now testing");
 // Function to handle device orientation changes
 function handleOrientation(event) {
-    const tiltThreshold = 15; // Adjust this threshold to your preference
-
-    // Get the rotation values from the event
-    const { alpha, beta, gamma } = event;
-
-    // Check the gamma value to determine tilt direction
-    if (gamma > tiltThreshold) {
-        alert('Tilted to the right');
-    } else if (gamma < -tiltThreshold) {
-        alert('Tilted to the left');
-    } else if (beta > tiltThreshold) {
-        alert('Tilted forward');
-    } else if (beta < -tiltThreshold) {
-        alert('Tilted backward');
-    } else {
-        alert('Device is roughly level');
-    }
+    // Display specific orientation data using alerts
+    alert('Alpha: ' + event.alpha + '\nBeta: ' + event.beta + '\nGamma: ' + event.gamma);
 }
 
-window.addEventListener('deviceorientation', handleOrientation);
+
+
 
 
 
