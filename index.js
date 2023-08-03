@@ -1,14 +1,15 @@
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
-const VELOCITY = 2;
+const VELOCITY = 1;
 const numCats = 1;
 let gameOver = false;		//checks if the game is over
 let myCats = [];      //an array of cats
 let update_iteration = 0;
 // let update_every = 500; 
 //level 0 - sleep speed, level 1 - walk speed, level 2 jog speed, level 3 run speed
-let my_speeds = [[0.5, 0.75, 1, 1.25, 1.5], [2, 2.25, 2.5], [3, 3.25, 3.5], [4, 4.25, 4.5]]  
-let update_every = [750, 1150, 2000, 3000];
+// let my_speeds = [[0.5, 0.75, 1, 1.25, 1.5], [2, 2.25, 2.5], [3, 3.25, 3.5], [4, 4.25, 4.5]]  
+let my_speeds = [[0.5], [1.5], [2.5], [3.5]]
+let update_every = [[1500, 2500, 3200, 4000]];
 //first 5 levels consist of 1 cat
 
 const mapCollection = {
@@ -400,6 +401,7 @@ class Cheese {
     this.image = new Image();
     this.position = position;
     this.taken = false;
+    this.placed = false;
     this.image.src = 'cheese.png';
     this.radius = 18;
   }
@@ -427,7 +429,7 @@ class Cheese {
   }
 }
 
-function findSpotForCheese(map) {
+function findSpotsForCheese(map) {
     const subMap = [];
 
     for (let row = 1; row < map.length - 1; row++) {
@@ -452,10 +454,48 @@ function findSpotForCheese(map) {
         return null; // No empty space available
     }
 
-    const randomIndex = Math.floor(Math.random() * emptyCoordinates.length);
+    const randomIndices = [];
+    while (randomIndices.length < 4) {
+        const randomIndex = Math.floor(Math.random() * emptyCoordinates.length);
+        if (!randomIndices.includes(randomIndex)) {
+            randomIndices.push(randomIndex);
+        }
+    }
 
-    return emptyCoordinates[randomIndex];
+    const randomEmptyCoordinates = randomIndices.map(index => emptyCoordinates[index]);
+
+    return randomEmptyCoordinates;
 }
+
+// function findSpotForCheese(map) {
+//     const subMap = [];
+
+//     for (let row = 1; row < map.length - 1; row++) {
+//         const subRow = [];
+//         for (let col = 1; col < map[row].length - 1; col++) {
+//             subRow.push(map[row][col]);
+//         }
+//         subMap.push(subRow);
+//     }
+
+//     const emptyCoordinates = [];
+
+//     for (let row = 0; row < subMap.length; row++) {
+//         for (let col = 0; col < subMap[row].length; col++) {
+//             if (subMap[row][col] === ' ') {
+//                 emptyCoordinates.push({ row, col });
+//             }
+//         }
+//     }
+
+//     if (emptyCoordinates.length === 0) {
+//         return null; // No empty space available
+//     }
+
+//     const randomIndex = Math.floor(Math.random() * emptyCoordinates.length);
+
+//     return emptyCoordinates[randomIndex];
+// }
 
 class Cat {
 	constructor({ position, velocity }) {
@@ -922,14 +962,31 @@ function getRandomSpeed(arr) {
     return arr[randomIndex];
   }
 
+  // let the_cheese = []
 
-  let coords = findSpotForCheese(map);
-  const cheese = new Cheese({
-    position: {
-      x: get_continuous_Y(coords.col),
-      y: get_continuous_X(coords.row)
-    }
-  })
+  // let coords = findSpotsForCheese(map)[0];
+  // const cheese = new Cheese({
+  //   position: {
+  //     x: get_continuous_Y(coords.col),
+  //     y: get_continuous_X(coords.row)
+  //   }
+  // })
+
+  const emptyCoords = findSpotsForCheese(map);
+  let cheese = [];
+  if (emptyCoords && emptyCoords.length >= 4) {
+      cheese = emptyCoords.slice(0, 4).map(coords => {
+          return new Cheese({
+              position: {
+                  x: get_continuous_Y(coords.col),
+                  y: get_continuous_X(coords.row)
+              }
+          });
+      });
+
+      // Now you have an array of four cheese objects
+  }
+  cheese[0].placed = true;
 
 
 function animate() {
@@ -937,7 +994,7 @@ function animate() {
   checkCollisionAndRestart();
   updateScoreboard(false);
 
-  if(player.position.y + 6 < startingY) {
+  if(player.position.y + 8 < startingY) {
     updateScoreboard(true);
     window.location.reload();
     return;
@@ -1049,14 +1106,17 @@ function animate() {
 
 	})
 	player.update();
-  if(!cheese.taken && checkCollision(player.position.x, player.position.y, cheese.position.x, cheese.position.y)) {
+  for(let j = 0; j < cheese.length; j++) {
+    if(cheese[j].placed && !cheese[j].taken && checkCollision(player.position.x, player.position.y, cheese[j].position.x, cheese[j].position.y)) {
     player.my_velocity += 1;
     player.speed_level += 1;
-    cheese.taken = true;
+    cheese[j].taken = true;
   }
 
-  if(!cheese.taken) {
-    cheese.draw();
+  if(!cheese[j].taken && cheese[j].placed) {
+    cheese[j].draw();
+  }
+  
   }
   
   
@@ -1102,13 +1162,14 @@ function animate() {
     if((myCats[i].rows.length !== 0) && (myCats[i].col.length !== 0) && (myCats[i].rows[myCats[i].path_iterations] !== -1) && (myCats[i].col[myCats[i].path_iterations] !== -1)) {
     update_iteration++;
 
-    if((update_iteration === 1) || ((update_iteration % update_every[myCats[i].speed_level]) === 0)) {
+    if((update_iteration === 1) || ((update_iteration % update_every[0][myCats[i].speed_level]) === 0)) {
+
+    if(myCats[i].speed_level !== 3) {
+      // let my_coord = findSpotsForCheese(map)[0];
+      // cheese.update_position(get_continuous_Y(my_coord.col), get_continuous_X(my_coord.row));
+      cheese[myCats[i].speed_level + 1].placed = true;
+    }
       
-      if(myCats[i].speed_level !== 3 && cheese.taken) {
-        let my_coord = findSpotForCheese(map)
-        cheese.update_position(get_continuous_Y(my_coord.col), get_continuous_X(my_coord.row));
-        cheese.taken = false;
-      }
 
       myCats[i].increaseSpeed();
       myCats[i].speed = getRandomSpeed(my_speeds[myCats[i].speed_level]);
