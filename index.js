@@ -1304,10 +1304,11 @@ window.addEventListener('keyup', ({key}) => {
 })
 
 // Add an event listener for the 'deviceorientation' event
-window.addEventListener('deviceorientation', handleOrientation);
+window.addEventListener('deviceorientation', handleOrientation, true);
 alert("now testing");
 // Function to handle device orientation changes
 function handleOrientation(event) {
+    alert("has been called");
     // Display specific orientation data using alerts
     alert('Alpha: ' + event.alpha + '\nBeta: ' + event.beta + '\nGamma: ' + event.gamma);
 }
