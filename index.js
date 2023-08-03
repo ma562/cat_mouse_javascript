@@ -1,16 +1,31 @@
 const canvas = document.querySelector('canvas')
 const c = canvas.getContext('2d')
 const VELOCITY = 1;
-const numCats = 1;
 let gameOver = false;		//checks if the game is over
 let myCats = [];      //an array of cats
-let update_iteration = 0;
+// let update_iteration = 0;
 // let update_every = 500; 
 //level 0 - sleep speed, level 1 - walk speed, level 2 jog speed, level 3 run speed
 // let my_speeds = [[0.5, 0.75, 1, 1.25, 1.5], [2, 2.25, 2.5], [3, 3.25, 3.5], [4, 4.25, 4.5]]  
 let my_speeds = [[0.5], [1.5], [2.5], [3.5]]
-let update_every = [[1500, 2500, 3200, 4000]];
+let update_every = [[1500, 2500, 3200, 4000], [1000, 2000, 3000, 4000], [1800, 2800, 3800, 4800]];
 //first 5 levels consist of 1 cat
+
+const currentScore = parseInt(localStorage.getItem('currentScore'));
+
+// Determine the value of numCats based on the conditions
+let numCats;
+
+if (currentScore <= 5) {
+    numCats = 1;
+} else if (currentScore <= 10) {
+    numCats = 2;
+} else {
+    numCats = 3;
+}
+
+// Declare numCats as a global variable
+window.numCats = numCats;
 
 const mapCollection = {
   map1: [
@@ -467,36 +482,6 @@ function findSpotsForCheese(map) {
     return randomEmptyCoordinates;
 }
 
-// function findSpotForCheese(map) {
-//     const subMap = [];
-
-//     for (let row = 1; row < map.length - 1; row++) {
-//         const subRow = [];
-//         for (let col = 1; col < map[row].length - 1; col++) {
-//             subRow.push(map[row][col]);
-//         }
-//         subMap.push(subRow);
-//     }
-
-//     const emptyCoordinates = [];
-
-//     for (let row = 0; row < subMap.length; row++) {
-//         for (let col = 0; col < subMap[row].length; col++) {
-//             if (subMap[row][col] === ' ') {
-//                 emptyCoordinates.push({ row, col });
-//             }
-//         }
-//     }
-
-//     if (emptyCoordinates.length === 0) {
-//         return null; // No empty space available
-//     }
-
-//     const randomIndex = Math.floor(Math.random() * emptyCoordinates.length);
-
-//     return emptyCoordinates[randomIndex];
-// }
-
 class Cat {
 	constructor({ position, velocity }) {
 		this.position = position
@@ -508,6 +493,7 @@ class Cat {
     this.speed = 0;
     this.speed_level = -1;
     this.movement_in_progress = false;
+    this.update_iteration = 0;
     this.path_iterations = 0;
     this.rows = [];
     this.col = [];
@@ -990,7 +976,7 @@ function getRandomSpeed(arr) {
 
 
 function animate() {
-  // console.log(localStorage.getItem('currentScore'));
+
   checkCollisionAndRestart();
   updateScoreboard(false);
 
@@ -1160,10 +1146,14 @@ function animate() {
 
   for(let i = 0; i < myCats.length; i++) {
     if((myCats[i].rows.length !== 0) && (myCats[i].col.length !== 0) && (myCats[i].rows[myCats[i].path_iterations] !== -1) && (myCats[i].col[myCats[i].path_iterations] !== -1)) {
-    update_iteration++;
+    
+    //NOTE EACH CAT NEEDS IT'S OWN FRIGGIN UPDATE ITERATION
+    myCats[i].update_iteration++;
 
-    if((update_iteration === 1) || ((update_iteration % update_every[0][myCats[i].speed_level]) === 0)) {
-
+    if((myCats[i].update_iteration === 1) || ((myCats[i].update_iteration % update_every[i][myCats[i].speed_level]) === 0)) {
+        console.log("updating");
+        console.log(myCats);
+        console.log(update_every[i][myCats[i].speed_level]);
     if(myCats[i].speed_level !== 3) {
       // let my_coord = findSpotsForCheese(map)[0];
       // cheese.update_position(get_continuous_Y(my_coord.col), get_continuous_X(my_coord.row));
@@ -1312,4 +1302,29 @@ window.addEventListener('keyup', ({key}) => {
 			break
 	}
 })
+
+// Function to handle device orientation changes
+function handleOrientation(event) {
+    const tiltThreshold = 15; // Adjust this threshold to your preference
+
+    // Get the rotation values from the event
+    const { alpha, beta, gamma } = event;
+
+    // Check the gamma value to determine tilt direction
+    if (gamma > tiltThreshold) {
+        alert('Tilted to the right');
+    } else if (gamma < -tiltThreshold) {
+        alert('Tilted to the left');
+    } else if (beta > tiltThreshold) {
+        alert('Tilted forward');
+    } else if (beta < -tiltThreshold) {
+        alert('Tilted backward');
+    } else {
+        alert('Device is roughly level');
+    }
+}
+
+window.addEventListener('deviceorientation', handleOrientation);
+
+
 
