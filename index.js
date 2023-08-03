@@ -1303,6 +1303,13 @@ window.addEventListener('keyup', ({key}) => {
 	}
 })
 
+if ('ondeviceorientation' in window) {
+    // Add an event listener for the 'deviceorientation' event
+    window.addEventListener('deviceorientation', handleOrientation);
+} else {
+    alert("Device orientation not supported by this browser.");
+}
+
 // Add an event listener for the 'deviceorientation' event
 window.addEventListener('deviceorientation', handleOrientation, true);
 alert("now testing");
