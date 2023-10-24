@@ -1303,11 +1303,13 @@ window.addEventListener('keyup', ({key}) => {
 	}
 })
 
-gyro.startTracking(function(o) {
-    // o.x, o.y, o.z for accelerometer
-    // o.alpha, o.beta, o.gamma for gyro
-    alert(o.alpha);
-  });
+// gyro.startTracking(function(o) {
+//     // o.x, o.y, o.z for accelerometer
+//     // o.alpha, o.beta, o.gamma for gyro
+//     console.log(o);
+//     console.log(gyro.getOrientation());
+//   });
+
 
 
 
